@@ -1,7 +1,7 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/VulkanInstance.h>
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
 
 #include <volk.h>
 

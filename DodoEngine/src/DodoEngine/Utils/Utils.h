@@ -3,6 +3,8 @@
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Utils/Log.h>
 
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -16,7 +18,7 @@ static std::vector<char> readFile(const char* filePath) {
 
 
     if(!fileStream.is_open()) {
-        DODO_CRITICAL("Could not open file");
+        DODO_CRITICAL("Could not open file at path {}", filePath);
     }
 
     size_t fileSize = fileStream.tellg();

@@ -9,12 +9,12 @@
 
 DODO_BEGIN_NAMESPACE
 
+using VulkanExtensions = std::vector<const char*>;
+using VulkanValidationLayers = std::vector<const char*>;
+
 class VulkanInstance 
 {
 public:
-    using VulkanExtensions = std::vector<const char*>;
-    using VulkanValidationLayers = std::vector<const char*>;
-    
     VulkanInstance(const VkApplicationInfo& _applicationInfo);
     ~VulkanInstance();
 

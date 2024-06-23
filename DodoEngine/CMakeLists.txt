@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28.1)
+cmake_minimum_required(VERSION 3.21)
 include(FetchContent)
 
 project(
@@ -27,8 +27,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(volk)
 
+# GLM
+# Volk loader
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY git@github.com:g-truc/glm.git
+    GIT_TAG 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
+)
+FetchContent_MakeAvailable(glm)
+
 add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST})
-target_link_libraries(DodoEngine glfw volk)
+target_link_libraries(DodoEngine glfw volk glm)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
 
 set_property(TARGET DodoEngine PROPERTY CXX_STANDARD 23)

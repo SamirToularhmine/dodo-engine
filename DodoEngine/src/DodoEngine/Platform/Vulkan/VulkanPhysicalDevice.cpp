@@ -1,4 +1,4 @@
-#include <DodoEngine/Platform/VulkanPhysicalDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
 #include <DodoEngine/Utils/Log.h>
 
 
@@ -22,7 +22,7 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(const VulkanInstance& _vulkanInstance
 
     // TODO: Refacto 
     uint32_t i = 0;
-    QueueFamilyIndices& queueFamilyIndices = m_VkQueues.m_QueueFamilyIndices; 
+    QueueFamilyIndices& queueFamilyIndices = m_VkQueuesInfo.m_QueueFamilyIndices; 
     for(const auto& queueFamilyProperties : queueFamilies)
     {
         // Graphics queue support
@@ -47,6 +47,20 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(const VulkanInstance& _vulkanInstance
     if(!queueFamilyIndices.isComplete()) {
         DODO_CRITICAL("No graphics queue family found in the selected device");
     }
+}
+
+uint32_t VulkanPhysicalDevice::FindMemoryType(uint32_t _typeFilter, VkMemoryPropertyFlags properties) const
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(m_VkPhysicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if (_typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    DODO_CRITICAL("Could not find a memory type with the specified filter");
 }
 
 VulkanPhysicalDevice::VulkanDevices VulkanPhysicalDevice::GetAvailablePhysicalDevices(const VulkanInstance& _vulkanInstance)

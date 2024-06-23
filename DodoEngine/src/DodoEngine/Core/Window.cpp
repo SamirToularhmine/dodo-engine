@@ -25,8 +25,6 @@ void Window::Init(const WindowProps& _windowProps) {
 
     glfwMakeContextCurrent(m_NativeWindow);
 
-    m_VulkanContext.Init(m_NativeWindow);
-
     DODO_INFO("Window initialized successfully");
 }
 

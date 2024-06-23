@@ -1,8 +1,8 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/VulkanInstance.h>
-#include <DodoEngine/Platform/VulkanSurface.h>
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 
 #include <volk.h>
 
@@ -27,11 +27,9 @@ struct QueueFamilyIndices {
     bool isComplete() const { return graphicsFamily.has_value() && presentFamily.has_value(); }
 };
 
-struct Queues {
+struct QueuesInfo {
     QueueFamilyIndices m_QueueFamilyIndices;
     QueueFamilyPriorities m_QueueFamilyPriorities;
-    VkQueue m_GraphicsFamilyQueue{VK_NULL_HANDLE};
-    VkQueue m_PresentationQueue{VK_NULL_HANDLE};
 };
 
 class VulkanPhysicalDevice
@@ -42,7 +40,9 @@ public:
     VulkanPhysicalDevice(const VulkanInstance& _vulkanInstance, const VulkanSurface& _vulkanSurface);
     ~VulkanPhysicalDevice() = default;
 
-    Queues& GetQueues() { return m_VkQueues; }
+    const QueuesInfo& GetQueues() const { return m_VkQueuesInfo; }
+
+    uint32_t FindMemoryType(uint32_t _typeFilter, VkMemoryPropertyFlags properties) const;
 
     operator const VkPhysicalDevice&() const { return m_VkPhysicalDevice; }
 
@@ -53,7 +53,7 @@ private:
 
 private:
     VkPhysicalDevice m_VkPhysicalDevice;
-    Queues m_VkQueues;
+    QueuesInfo m_VkQueuesInfo;
 };
 
 DODO_END_NAMESPACE

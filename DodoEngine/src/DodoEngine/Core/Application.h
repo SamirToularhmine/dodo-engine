@@ -1,7 +1,7 @@
 #pragma once
 
-#include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Window.h>
+#include <DodoEngine/Renderer/Renderer.h>
 #include <DodoEngine/Utils/Utils.h>
 
 #include <memory>
@@ -17,7 +17,7 @@ class Application {
         void Run();
     private:
         std::unique_ptr<Window> m_Window;
-        std::unique_ptr<GraphicContext> m_GraphicContext;
+        std::unique_ptr<Renderer> m_Renderer;
 };
 
 DODO_END_NAMESPACE

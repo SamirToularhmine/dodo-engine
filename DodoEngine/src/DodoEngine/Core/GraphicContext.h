@@ -11,7 +11,7 @@ class GraphicContext
 public:
     virtual void Init(GLFWwindow* _window) = 0;
     
-    virtual void Update() = 0;
+    virtual void Update(uint32_t _frameId) = 0;
 
     virtual void Shutdown() = 0;
 
