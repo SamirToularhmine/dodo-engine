@@ -10,7 +10,7 @@
 
 DODO_BEGIN_NAMESPACE
 
-void VulkanContext::Init(GLFWwindow* _window) 
+void VulkanContext::Init(GLFWwindow* _window)
 {
     DODO_INFO("Initializing Vulkan context...");
 
@@ -39,27 +39,7 @@ void VulkanContext::Init(GLFWwindow* _window)
     m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, swapChainData);
     m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, swapChainData, *m_VulkanRenderPass);
 
-    const ImageViews& imageViews = m_VulkanSwapChain->GetImagesViews();
-    std::ranges::for_each(std::cbegin(imageViews), std::cend(imageViews), [&](const VkImageView& _imageView) {
-        const VkImageView attachments[] = { _imageView };
-
-        VkFramebufferCreateInfo framebufferCreateInfo{};
-        framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferCreateInfo.renderPass = *m_VulkanRenderPass;
-        framebufferCreateInfo.attachmentCount = 1;
-        framebufferCreateInfo.pAttachments = attachments;
-        framebufferCreateInfo.width = swapChainData.m_VkExtent.width;
-        framebufferCreateInfo.height = swapChainData.m_VkExtent.height;
-        framebufferCreateInfo.layers = 1;
-
-        VkFramebuffer framebuffer;
-        const VkResult createFramebufferResult = vkCreateFramebuffer(*m_VulkanDevice, &framebufferCreateInfo, nullptr, &framebuffer);
-        if(createFramebufferResult != VK_SUCCESS) {
-            DODO_CRITICAL("Could not create frame buffer");
-        }
-
-        m_VkFramebuffers.emplace_back(framebuffer);
-    });
+    m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
 
     const QueuesInfo& deviceQueuesInfo = m_VulkanPhysicalDevice->GetQueues();
 
@@ -108,53 +88,60 @@ void VulkanContext::Init(GLFWwindow* _window)
         }
     }
 
+    m_NativeWindow = _window;
+
     DODO_INFO("Vulkan context initialized successfully");
 }
 
 void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
 {
     const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
-    vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
-    vkResetFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex]);
-    
-    VkCommandBuffer chosenCommandBuffer = m_VkCommandBuffers[currentFrameIndex];
-    vkAcquireNextImageKHR(*m_VulkanDevice, *m_VulkanSwapChain, UINT64_MAX, m_VkImagesAvailable[currentFrameIndex], VK_NULL_HANDLE, &_vulkanRenderPassData.m_ImageIndex);
+    _vulkanRenderPassData.m_FrameIndex = currentFrameIndex;
 
-    vkResetCommandBuffer(chosenCommandBuffer, 0);
+    vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
     
-    VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
+    if(!m_VulkanSwapChain->AcquireNextImage(m_VkImagesAvailable[currentFrameIndex], _vulkanRenderPassData.m_ImageIndex))
+    {
+        DODO_ERROR("Could not acquire a new Swap Chain image, trying to recreate the Swap Chain...");
+        m_VulkanSwapChain.reset();
+        DestroyFrameBuffers();
+        m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
+        m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
+        return;
+    }
+
+    vkResetFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex]);
+
+    const VkCommandBuffer chosenCommandBuffer = m_VkCommandBuffers[currentFrameIndex];
+	vkResetCommandBuffer(chosenCommandBuffer, 0);
+    
     VkCommandBufferBeginInfo commandBufferBeginInfo{};
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    VkResult beginCommandBufferResult = vkBeginCommandBuffer(chosenCommandBuffer, &commandBufferBeginInfo);
+    const VkResult beginCommandBufferResult = vkBeginCommandBuffer(chosenCommandBuffer, &commandBufferBeginInfo);
     if (beginCommandBufferResult != VK_SUCCESS) {
         DODO_CRITICAL("Could not begin recording command buffer");
     }
 
-    VkRenderPassBeginInfo renderPassBeginInfo{};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.renderPass = *m_VulkanRenderPass;
-    renderPassBeginInfo.framebuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
-    renderPassBeginInfo.renderArea.offset = { 0, 0 };
-    renderPassBeginInfo.renderArea.extent = swapChainData.m_VkExtent;
+    _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
+    _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
+    _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
 
-    VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-    renderPassBeginInfo.clearValueCount = 1;
-    renderPassBeginInfo.pClearValues = &clearColor;
+    m_VulkanRenderPass->Begin(_vulkanRenderPassData);
 
-    vkCmdBeginRenderPass(chosenCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(chosenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_VulkanGraphicPipeline);
 
     vkCmdSetViewport(chosenCommandBuffer, 0, 1, &m_VulkanGraphicPipeline->GetViewPort());
     vkCmdSetScissor(chosenCommandBuffer, 0, 1, &m_VulkanGraphicPipeline->GetScissor());
 
-    _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
+    _vulkanRenderPassData.m_RenderPassStarted = true;
 }
 
-void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData)
+void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const
 {
-    const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
-    vkCmdEndRenderPass(m_VkCommandBuffers[currentFrameIndex]);
+    const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameIndex;
+
+    m_VulkanRenderPass->End(_vulkanRenderPassData);
 
     VkResult endCommandBufferResult = vkEndCommandBuffer(m_VkCommandBuffers[currentFrameIndex]);
     if (endCommandBufferResult != VK_SUCCESS) {
@@ -164,8 +151,8 @@ void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassD
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = { m_VkImagesAvailable[currentFrameIndex] };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    const VkSemaphore waitSemaphores[] = { m_VkImagesAvailable[currentFrameIndex] };
+    const VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
@@ -178,7 +165,7 @@ void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassD
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     const VulkanDevice::Queues& deviceQueues = m_VulkanDevice->GetQueues();
-    VkResult submitQueueResult = vkQueueSubmit(deviceQueues.m_GraphicsFamilyQueue, 1, &submitInfo, m_VkInFlightFences[currentFrameIndex]);
+    const VkResult submitQueueResult = vkQueueSubmit(deviceQueues.m_GraphicsFamilyQueue, 1, &submitInfo, m_VkInFlightFences[currentFrameIndex]);
     if (submitQueueResult != VK_SUCCESS) {
         DODO_CRITICAL("Could not submit the queue command buffer");
     }
@@ -188,7 +175,7 @@ void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassD
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = { *m_VulkanSwapChain };
+    const VkSwapchainKHR swapChains[] = { *m_VulkanSwapChain };
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &_vulkanRenderPassData.m_ImageIndex;
@@ -196,14 +183,21 @@ void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassD
     vkQueuePresentKHR(deviceQueues.m_PresentationQueue, &presentInfo);
 }
 
-void VulkanContext::Shutdown()
+void VulkanContext::DestroyFrameBuffers()
 {
-    vkDeviceWaitIdle(*m_VulkanDevice);
-
     for (uint32_t i = 0; i < m_VkFramebuffers.size(); ++i)
     {
         vkDestroyFramebuffer(*m_VulkanDevice, m_VkFramebuffers[i], nullptr);
     }
+
+    m_VkFramebuffers.clear();
+}
+
+void VulkanContext::Shutdown()
+{
+    vkDeviceWaitIdle(*m_VulkanDevice);
+
+    DestroyFrameBuffers();
 
     for(uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {

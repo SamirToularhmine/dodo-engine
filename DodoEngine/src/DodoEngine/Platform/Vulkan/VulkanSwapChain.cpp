@@ -1,6 +1,11 @@
 #include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 
 #include <DodoEngine/Utils/Log.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
+#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 
 #include <GLFW/glfw3.h>
 
@@ -133,6 +138,21 @@ VulkanSwapChain::~VulkanSwapChain()
     {
         vkDestroyImageView(*m_VulkanDevice, m_ImageViews[i], nullptr);
     }
+}
+
+void VulkanSwapChain::InitFrameBuffers(std::vector<VulkanFrameBuffer>& _frameBuffers, const VulkanRenderPass& _vulkanRenderPass) const
+{
+    std::ranges::for_each(std::cbegin(m_ImageViews), std::cend(m_ImageViews), [&](const VkImageView& _imageView) {
+        const VkImageView attachments[] = { _imageView };
+
+        _frameBuffers.emplace_back(m_VulkanDevice, _vulkanRenderPass, attachments, m_ChosenSwapChainDetails);
+    });
+}
+
+bool VulkanSwapChain::AcquireNextImage(const VkSemaphore& _semaphore, uint32_t& _imageIndex) const
+{
+    return vkAcquireNextImageKHR(*m_VulkanDevice, m_VkSwapChain, UINT64_MAX, _semaphore, VK_NULL_HANDLE, &_imageIndex) == VK_SUCCESS;
+    
 }
 
 DODO_END_NAMESPACE

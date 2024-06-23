@@ -3,6 +3,7 @@
 #include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
 #include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
 #include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
@@ -24,11 +25,15 @@ struct VulkanRenderPassData
 {
     uint32_t m_FrameCount{ 0 };
     uint32_t m_ImageIndex{ 0 };
+    uint32_t m_FrameIndex{ 0 };
     VkCommandBuffer m_CommandBuffer;
+    VkFramebuffer m_FrameBuffer;
+    VulkanSwapChainData m_SwapChainData;
+    bool m_RenderPassStarted{ false };
 };
 
 class VulkanContext : public GraphicContext {
-    using Framebuffers = std::vector<VkFramebuffer>;
+    using Framebuffers = std::vector<VulkanFrameBuffer>;
 
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -41,7 +46,7 @@ class VulkanContext : public GraphicContext {
 
         void BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
 
-        void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
+        void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const;
 
         const Ref<VulkanDevice>& GetVulkanDevice() const { return m_VulkanDevice; }
         const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_VulkanPhysicalDevice; }
@@ -51,6 +56,9 @@ class VulkanContext : public GraphicContext {
             static VulkanContext instance;
             return instance;
         }
+
+private:
+    void DestroyFrameBuffers();
 
     private:
         Ref<VulkanInstance> m_VulkanInstance;
@@ -62,6 +70,7 @@ class VulkanContext : public GraphicContext {
         Ref<VulkanGraphicPipeline> m_VulkanGraphicPipeline;
 
 	private:
+        GLFWwindow* m_NativeWindow;
         Framebuffers m_VkFramebuffers;
         VkCommandPool m_VkCommandPool;
         std::vector<VkCommandBuffer> m_VkCommandBuffers;

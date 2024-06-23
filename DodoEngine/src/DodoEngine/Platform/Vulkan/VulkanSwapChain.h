@@ -1,14 +1,20 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
-#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 
 #include <volk.h>
 
+#include <vector>
+
+class GLFWwindow;
 
 DODO_BEGIN_NAMESPACE
+
+class VulkanDevice;
+class VulkanFrameBuffer;
+class VulkanPhysicalDevice;
+class VulkanRenderPass;
+class VulkanSurface;
 
 struct VulkanSwapChainData {
     VkSurfaceFormatKHR m_VkSurfaceFormat;
@@ -42,7 +48,12 @@ public:
 
     const ImageViews& GetImagesViews() { return m_ImageViews; }
 
+    void InitFrameBuffers(std::vector<VulkanFrameBuffer>& _frameBuffers, const VulkanRenderPass& _vulkanRenderPass) const;
+
+	bool AcquireNextImage(const VkSemaphore& _semaphore, uint32_t& _imageIndex) const;
+
     operator const VkSwapchainKHR& () const { return m_VkSwapChain; }
+
 private:
     VkSwapchainKHR m_VkSwapChain;
     Ref<VulkanDevice> m_VulkanDevice;

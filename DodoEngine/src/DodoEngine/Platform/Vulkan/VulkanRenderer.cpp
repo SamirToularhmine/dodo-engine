@@ -28,6 +28,11 @@ void VulkanRenderer::Update()
 	VulkanRenderPassData vulkanRenderPassData{.m_FrameCount = m_FrameCount++};
 	m_VulkanContext.BeginRenderPass(vulkanRenderPassData);
 
+	if(!vulkanRenderPassData.m_RenderPassStarted)
+	{
+		return;
+	}
+
 	for(uint32_t  i = 0; i < m_VertexBuffers.size(); ++i)
 	{
 		const VulkanBuffer& _vertexBuffer = m_VertexBuffers[i];

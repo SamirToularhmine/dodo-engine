@@ -1,9 +1,13 @@
 #include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
+
+#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Log.h>
 
-DODO_BEGIN_NAMESPACE
+#include "VulkanContext.h"
 
-VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanSwapChainData& _swapChainData)
+DODO_BEGIN_NAMESPACE
+	VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanSwapChainData& _swapChainData)
 	: m_VulkanDevice(_vulkanDevice)
 {
     VkAttachmentDescription colorAttachment{};
@@ -51,6 +55,27 @@ VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const
 VulkanRenderPass::~VulkanRenderPass()
 {
     vkDestroyRenderPass(*m_VulkanDevice, m_VkRenderPass, nullptr);
+}
+
+void VulkanRenderPass::Begin(const VulkanRenderPassData& _vulkanRenderPassData) const
+{
+    VkRenderPassBeginInfo renderPassBeginInfo{};
+    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassBeginInfo.renderPass = m_VkRenderPass;
+    renderPassBeginInfo.framebuffer = _vulkanRenderPassData.m_FrameBuffer;
+    renderPassBeginInfo.renderArea.offset = { 0, 0 };
+    renderPassBeginInfo.renderArea.extent = _vulkanRenderPassData.m_SwapChainData.m_VkExtent;
+
+    VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+    renderPassBeginInfo.clearValueCount = 1;
+    renderPassBeginInfo.pClearValues = &clearColor;
+
+    vkCmdBeginRenderPass(_vulkanRenderPassData.m_CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void VulkanRenderPass::End(const VulkanRenderPassData& _vulkanRenderPassData) const
+{
+    vkCmdEndRenderPass(_vulkanRenderPassData.m_CommandBuffer);
 }
 
 DODO_END_NAMESPACE
