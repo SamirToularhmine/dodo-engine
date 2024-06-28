@@ -19,8 +19,8 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice,
 	: m_VulkanDevice(_vulkanDevice)
 {
     // Loading shader
-    std::vector<char> vertexShaderFile = readFile("vert.spv");
-    std::vector<char> fragmentShaderFile = readFile("frag.spv");
+    std::vector<char> vertexShaderFile = readFile("resources/vert.spv");
+    std::vector<char> fragmentShaderFile = readFile("resources/frag.spv");
 
     // Vertex Shader
     VkShaderModuleCreateInfo vertexShaderModuleCreateInfo{};
@@ -105,7 +105,7 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice,
     rasterizerCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizerCreateInfo.lineWidth = 1.0f;
     rasterizerCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizerCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizerCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizerCreateInfo.depthBiasEnable = VK_FALSE;
 
     VkPipelineMultisampleStateCreateInfo multisampleCreateInfo{};

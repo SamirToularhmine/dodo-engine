@@ -3,7 +3,6 @@
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
 
-#include <algorithm>
 #include <ranges>
 #include <set>
 
@@ -37,8 +36,11 @@ void VulkanContext::Init(GLFWwindow* _window)
     VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
 
     m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, swapChainData);
-    VulkanDescriptorSetLayout vulkanDescriptorSetLayout{m_VulkanDevice };
-    m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, vulkanDescriptorSetLayout, swapChainData, *m_VulkanRenderPass);
+    m_VulkanDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(m_VulkanDevice);
+    m_VkDescriptorSetLayouts.resize(MAX_FRAMES_IN_FLIGHT, *m_VulkanDescriptorSetLayout);
+    m_VulkanDescriptorPool = std::make_shared<VulkanDescriptorPool>(MAX_FRAMES_IN_FLIGHT, m_VulkanDevice);
+    m_VulkanDescriptorSet = std::make_shared<VulkanDescriptorSet>(*m_VulkanDescriptorPool, m_VulkanDevice, m_VkDescriptorSetLayouts.data());
+    m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, *m_VulkanDescriptorSetLayout, swapChainData, *m_VulkanRenderPass);
 
     m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
 
@@ -127,6 +129,8 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
     _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
     _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
     _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
+    _vulkanRenderPassData.m_PipelineLayout = m_VulkanGraphicPipeline->GetPipelineLayout();
+    _vulkanRenderPassData.m_DescriptorSet = m_VulkanDescriptorSet;
 
     m_VulkanRenderPass->Begin(_vulkanRenderPassData);
 

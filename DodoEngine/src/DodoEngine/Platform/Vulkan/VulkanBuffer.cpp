@@ -40,6 +40,8 @@ VulkanBuffer::VulkanBuffer(const void* _data, VkDeviceSize _allocationSize, VkBu
 		DODO_CRITICAL("Could not allocate memory for buffer");
 	}
 
+	vkBindBufferMemory(vulkanDevice, m_Buffer, m_DeviceMemory, 0);
+
     SetMemory(_data, _allocationSize);
 
 	m_Size = _allocationSize;
@@ -57,8 +59,6 @@ VulkanBuffer::~VulkanBuffer()
 void VulkanBuffer::SetMemory(const void*_data, VkDeviceSize _allocationSize) {
     VulkanContext vulkanContext = VulkanContext::Get();
     const VulkanDevice& vulkanDevice = *vulkanContext.GetVulkanDevice();
-
-    vkBindBufferMemory(vulkanDevice, m_Buffer, m_DeviceMemory, 0);
 
     void* data;
     vkMapMemory(vulkanDevice, m_DeviceMemory, 0, _allocationSize, 0, &data);

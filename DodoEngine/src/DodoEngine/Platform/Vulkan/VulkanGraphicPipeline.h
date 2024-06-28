@@ -21,10 +21,11 @@ public:
                           const VulkanRenderPass& _vulkanRenderPass);
     ~VulkanGraphicPipeline();
 
-    const VkViewport GetViewPort() const { return m_Viewport; }
-    const VkRect2D GetScissor() const { return m_Scissor; }
+    const VkViewport& GetViewPort() const { return m_Viewport; }
+    const VkRect2D& GetScissor() const { return m_Scissor; }
 
     operator const VkPipeline& () const { return m_VkPipeline; }
+    VkPipelineLayout GetPipelineLayout() const { return m_VkPipelineLayout; };
 private:
     VkPipeline m_VkPipeline;
     VkPipelineLayout m_VkPipelineLayout;

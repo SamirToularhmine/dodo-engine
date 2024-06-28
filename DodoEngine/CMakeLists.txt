@@ -36,8 +36,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST}
-        src/DodoEngine/Renderer/UniformBufferObject.h)
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST})
 target_link_libraries(DodoEngine glfw volk glm)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
 

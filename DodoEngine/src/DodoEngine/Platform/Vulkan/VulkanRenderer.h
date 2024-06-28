@@ -38,6 +38,10 @@ private:
 	std::vector<VulkanBuffer> m_VertexBuffers;
 	std::vector<VulkanBuffer> m_IndicesBuffers;
     std::vector<VulkanBuffer> m_UniformBuffers;
+
+	Ref<VulkanDescriptorSet> m_VulkanDescriptorSet;
+
+	UniformBufferObject m_UniformMvp;
 };
 
 DODO_END_NAMESPACE
