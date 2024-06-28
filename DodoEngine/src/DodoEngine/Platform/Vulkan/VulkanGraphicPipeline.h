@@ -1,23 +1,28 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
-#include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
-#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 
 #include <volk.h>
 
 
 DODO_BEGIN_NAMESPACE
 
+class VulkanDevice;
+class VulkanDescriptorSetLayout;
+struct VulkanSwapChainData;
+class VulkanRenderPass;
+
 class VulkanGraphicPipeline
 {
 public:
-    VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, const VulkanSwapChainData& _swapChainData, const VulkanRenderPass& _vulkanRenderPass);
+    VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice,
+                          VkDescriptorSetLayout& _vkDescriptorSetLayout,
+                          const VulkanSwapChainData& _swapChainData,
+                          const VulkanRenderPass& _vulkanRenderPass);
     ~VulkanGraphicPipeline();
 
-    const VkViewport& GetViewPort() const { return m_Viewport; }
-    const VkRect2D& GetScissor() const { return m_Scissor; }
+    const VkViewport GetViewPort() const { return m_Viewport; }
+    const VkRect2D GetScissor() const { return m_Scissor; }
 
     operator const VkPipeline& () const { return m_VkPipeline; }
 private:

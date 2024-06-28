@@ -1,5 +1,9 @@
 #include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
+#include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Renderer/Vertex.h>
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
@@ -8,12 +12,15 @@
 
 DODO_BEGIN_NAMESPACE
 
-VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, const VulkanSwapChainData& _swapChainData, const VulkanRenderPass& _vulkanRenderPass)
+VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice,
+                                             VkDescriptorSetLayout& _vkDescriptorSetLayout,
+                                             const VulkanSwapChainData& _swapChainData,
+                                             const VulkanRenderPass& _vulkanRenderPass)
 	: m_VulkanDevice(_vulkanDevice)
 {
     // Loading shader
-    std::vector<char> vertexShaderFile = readFile("resources/vert.spv");
-    std::vector<char> fragmentShaderFile = readFile("resources/frag.spv");
+    std::vector<char> vertexShaderFile = readFile("vert.spv");
+    std::vector<char> fragmentShaderFile = readFile("frag.spv");
 
     // Vertex Shader
     VkShaderModuleCreateInfo vertexShaderModuleCreateInfo{};
@@ -118,6 +125,8 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, co
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
     pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutCreateInfo.setLayoutCount = 1;
+    pipelineLayoutCreateInfo.pSetLayouts = &_vkDescriptorSetLayout;
 
     VkResult pipeLayoutCreateResult = vkCreatePipelineLayout(*_vulkanDevice, &pipelineLayoutCreateInfo, nullptr, &m_VkPipelineLayout);
     if (pipeLayoutCreateResult != VK_SUCCESS) {

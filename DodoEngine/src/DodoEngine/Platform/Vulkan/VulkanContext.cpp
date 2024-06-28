@@ -37,7 +37,8 @@ void VulkanContext::Init(GLFWwindow* _window)
     VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
 
     m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, swapChainData);
-    m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, swapChainData, *m_VulkanRenderPass);
+    VulkanDescriptorSetLayout vulkanDescriptorSetLayout{m_VulkanDevice };
+    m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, vulkanDescriptorSetLayout, swapChainData, *m_VulkanRenderPass);
 
     m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
 

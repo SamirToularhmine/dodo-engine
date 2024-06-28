@@ -7,6 +7,7 @@
 DODO_BEGIN_NAMESPACE
 
 VulkanBuffer::VulkanBuffer(const void* _data, VkDeviceSize _allocationSize, VkBufferCreateFlags _usage, VkMemoryPropertyFlags _properties)
+    : m_Data(_data)
 {
 	VulkanContext vulkanContext = VulkanContext::Get();
 	const VulkanDevice& vulkanDevice = *vulkanContext.GetVulkanDevice();
@@ -39,12 +40,7 @@ VulkanBuffer::VulkanBuffer(const void* _data, VkDeviceSize _allocationSize, VkBu
 		DODO_CRITICAL("Could not allocate memory for buffer");
 	}
 
-	vkBindBufferMemory(vulkanDevice, m_Buffer, m_DeviceMemory, 0);
-
-	void* data;
-	vkMapMemory(vulkanDevice, m_DeviceMemory, 0, _allocationSize, 0, &data);
-	memcpy(data, _data, _allocationSize);
-	vkUnmapMemory(vulkanDevice, m_DeviceMemory);
+    SetMemory(_data, _allocationSize);
 
 	m_Size = _allocationSize;
 }
@@ -56,6 +52,18 @@ VulkanBuffer::~VulkanBuffer()
 
 	vkDestroyBuffer(vulkanDevice, m_Buffer, nullptr);
 	vkFreeMemory(vulkanDevice, m_DeviceMemory, nullptr);
+}
+
+void VulkanBuffer::SetMemory(const void*_data, VkDeviceSize _allocationSize) {
+    VulkanContext vulkanContext = VulkanContext::Get();
+    const VulkanDevice& vulkanDevice = *vulkanContext.GetVulkanDevice();
+
+    vkBindBufferMemory(vulkanDevice, m_Buffer, m_DeviceMemory, 0);
+
+    void* data;
+    vkMapMemory(vulkanDevice, m_DeviceMemory, 0, _allocationSize, 0, &data);
+    memcpy(data, _data, _allocationSize);
+    vkUnmapMemory(vulkanDevice, m_DeviceMemory);
 }
 
 DODO_END_NAMESPACE

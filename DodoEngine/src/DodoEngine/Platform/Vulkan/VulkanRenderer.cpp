@@ -2,6 +2,10 @@
 
 #include <DodoEngine/Renderer/Quad.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+
 DODO_BEGIN_NAMESPACE
 
 VulkanRenderer::VulkanRenderer(VulkanContext& _vulkanContext)
@@ -21,6 +25,10 @@ void VulkanRenderer::Init(GLFWwindow* _nativeWindow)
 	m_IndicesBuffers.emplace_back(
 		QUAD_INDICES.data(), sizeof(uint16_t) * QUAD_INDICES.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 	);
+
+    m_UniformBuffers.emplace_back(
+        nullptr, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
 }
 
 void VulkanRenderer::Update()
@@ -37,6 +45,9 @@ void VulkanRenderer::Update()
 	{
 		const VulkanBuffer& _vertexBuffer = m_VertexBuffers[i];
 		const VulkanBuffer& _indexBuffer = m_IndicesBuffers[i];
+
+        const UniformBufferObject uniformBufferObject = GetUniformBufferObject(vulkanRenderPassData.m_SwapChainData);
+        m_UniformBuffers.front().SetMemory(&uniformBufferObject, sizeof(UniformBufferObject));
 
 		VkBuffer vertexBuffers[] = { _vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
@@ -56,6 +67,15 @@ void VulkanRenderer::Shutdown()
 
 void VulkanRenderer::DrawQuad()
 {
+}
+
+UniformBufferObject VulkanRenderer::GetUniformBufferObject(const VulkanSwapChainData& _vulkanSwapChainData) {
+    const VkExtent2D extent = _vulkanSwapChainData.m_VkExtent;
+    return {
+        glm::rotate(glm::mat4(1.0f), 1 * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+        glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+        glm::perspective(glm::radians(45.0f), extent.width / (float) extent.height, 0.1f, 10.0f)
+    };
 }
 
 DODO_END_NAMESPACE

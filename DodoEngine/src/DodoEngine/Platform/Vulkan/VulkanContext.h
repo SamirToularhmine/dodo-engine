@@ -3,6 +3,7 @@
 #include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
 #include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
 #include <DodoEngine/Platform/Vulkan/VulkanInstance.h>

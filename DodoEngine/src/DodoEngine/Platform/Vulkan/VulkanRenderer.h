@@ -4,12 +4,14 @@
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Renderer/Renderer.h>
+#include <DodoEngine/Renderer/UniformBufferObject.h>
 #include <DodoEngine/Renderer/Vertex.h>
 
 #include <GLFW/glfw3.h>
 
 
 DODO_BEGIN_NAMESPACE
+
 
 class VulkanRenderer : public Renderer
 {
@@ -27,11 +29,15 @@ public:
 	void DrawQuad() override;
 
 private:
+    static UniformBufferObject GetUniformBufferObject(const VulkanSwapChainData& _vulkanSwapChainData);
+
+private:
 	VulkanContext& m_VulkanContext;
 	uint32_t m_FrameCount{ 0 };
 
 	std::vector<VulkanBuffer> m_VertexBuffers;
 	std::vector<VulkanBuffer> m_IndicesBuffers;
+    std::vector<VulkanBuffer> m_UniformBuffers;
 };
 
 DODO_END_NAMESPACE
