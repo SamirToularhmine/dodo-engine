@@ -3,7 +3,7 @@
 int main(int argc, char const *argv[])
 {
     auto application = dodo::Application::Create();
-    application->Init({800, 600, "Dodo Test Application"});
+    application->Init(dodo::WindowProps{800, 600, "Dodo Engine", true});
     application->Run();
 
     return 0;

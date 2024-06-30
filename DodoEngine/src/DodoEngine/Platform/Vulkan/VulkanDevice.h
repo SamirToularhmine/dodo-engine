@@ -1,12 +1,14 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
 
 #include <volk.h>
 
 
 DODO_BEGIN_NAMESPACE
+
+class VulkanPhysicalDevice;
+class VulkanInstance;
 
 class VulkanDevice
 {

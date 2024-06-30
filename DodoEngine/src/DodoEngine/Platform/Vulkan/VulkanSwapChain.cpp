@@ -55,7 +55,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanSurface& _vulkanSurface, const Vulk
     }
 
     // Chosing the present mode : refacto to chose an available one
-    VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+    VkPresentModeKHR chosenPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
     // Chosing the swap chain extent
     const VkSurfaceCapabilitiesKHR& capabilities = m_Spec.m_VkSurfaceCapabilities;

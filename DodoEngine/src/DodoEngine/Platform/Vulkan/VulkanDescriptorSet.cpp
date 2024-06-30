@@ -8,7 +8,7 @@
 #include <DodoEngine/Utils/Log.h>
 
 DODO_BEGIN_NAMESPACE
-	VulkanDescriptorSet::VulkanDescriptorSet(VulkanDescriptorPool& _vulkanDescriptionPool, Ref<VulkanDevice>& _vulkanDevice, VkDescriptorSetLayout _vulkanDescriptorSetLayouts[]
+	VulkanDescriptorSet::VulkanDescriptorSet(VulkanDescriptorPool& _vulkanDescriptionPool, const Ref<VulkanDevice>& _vulkanDevice, VkDescriptorSetLayout _vulkanDescriptorSetLayouts[]
 ) : m_VulkanDevice(_vulkanDevice)
 {
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -26,14 +26,14 @@ DODO_BEGIN_NAMESPACE
 	}
 }
 
-void VulkanDescriptorSet::SetMemory(const std::vector<VulkanBuffer>& _buffers, const uint32_t& _frameIndex)
+void VulkanDescriptorSet::UpdateDescriptor(const VulkanBuffer& _buffer, const uint32_t& _frameIndex) const
 {
 	for(uint32_t i = 0; i < VulkanContext::MAX_FRAMES_IN_FLIGHT; ++i)
 	{
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = _buffers.front();
+		bufferInfo.buffer = _buffer;
 		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
+		bufferInfo.range = _buffer.Size();
 
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

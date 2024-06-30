@@ -1,7 +1,6 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
 
 #include <volk.h>
 
@@ -9,6 +8,8 @@
 class GLFWwindow;
 
 DODO_BEGIN_NAMESPACE
+
+class VulkanInstance;
 
 class VulkanSurface 
 {

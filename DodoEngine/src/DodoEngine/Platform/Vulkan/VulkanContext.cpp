@@ -1,5 +1,14 @@
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
+#include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
+#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
 
@@ -99,10 +108,9 @@ void VulkanContext::Init(GLFWwindow* _window)
 void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
 {
     const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
-    _vulkanRenderPassData.m_FrameIndex = currentFrameIndex;
 
     vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
-    
+
     if(!m_VulkanSwapChain->AcquireNextImage(m_VkImagesAvailable[currentFrameIndex], _vulkanRenderPassData.m_ImageIndex))
     {
         DODO_ERROR("Could not acquire a new Swap Chain image, trying to recreate the Swap Chain...");
@@ -110,14 +118,15 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
         DestroyFrameBuffers();
         m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
         m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
+        m_VulkanGraphicPipeline->SetViewPort(m_VulkanSwapChain->GetSpec());
         return;
     }
 
     vkResetFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex]);
 
     const VkCommandBuffer chosenCommandBuffer = m_VkCommandBuffers[currentFrameIndex];
-	vkResetCommandBuffer(chosenCommandBuffer, 0);
-    
+    vkResetCommandBuffer(chosenCommandBuffer, 0);
+
     VkCommandBufferBeginInfo commandBufferBeginInfo{};
     commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -126,20 +135,17 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
         DODO_CRITICAL("Could not begin recording command buffer");
     }
 
+
+    _vulkanRenderPassData.m_RenderPassStarted = true;
     _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
     _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
     _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
     _vulkanRenderPassData.m_PipelineLayout = m_VulkanGraphicPipeline->GetPipelineLayout();
     _vulkanRenderPassData.m_DescriptorSet = m_VulkanDescriptorSet;
+    _vulkanRenderPassData.m_FrameIndex = currentFrameIndex;
 
     m_VulkanRenderPass->Begin(_vulkanRenderPassData);
-
-    vkCmdBindPipeline(chosenCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, *m_VulkanGraphicPipeline);
-
-    vkCmdSetViewport(chosenCommandBuffer, 0, 1, &m_VulkanGraphicPipeline->GetViewPort());
-    vkCmdSetScissor(chosenCommandBuffer, 0, 1, &m_VulkanGraphicPipeline->GetScissor());
-
-    _vulkanRenderPassData.m_RenderPassStarted = true;
+    m_VulkanGraphicPipeline->Bind(chosenCommandBuffer);
 }
 
 void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const

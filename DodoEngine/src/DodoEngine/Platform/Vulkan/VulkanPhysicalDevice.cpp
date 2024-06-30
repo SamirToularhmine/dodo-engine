@@ -1,4 +1,7 @@
 #include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
+
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 #include <DodoEngine/Utils/Log.h>
 
 

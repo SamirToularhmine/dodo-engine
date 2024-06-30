@@ -7,16 +7,26 @@
 
 DODO_BEGIN_NAMESPACE
 
+class VulkanDevice;
+class VulkanPhysicalDevice;
+
+struct VulkanBufferSpec
+{
+	VkDeviceSize m_AllocationSize;
+	VkBufferCreateFlags m_Usage;
+	VkMemoryPropertyFlags m_Properties;
+};
+
 class VulkanBuffer
 {
 public:
-	VulkanBuffer(const void* _data, VkDeviceSize allocationSize, VkBufferCreateFlags usage, VkMemoryPropertyFlags properties);
+	VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec, const Ref<VulkanDevice>& _vulkanDevice, const VulkanPhysicalDevice& _vulkanPhysicalDevice);
 
 	~VulkanBuffer();
 
-	uint32_t Size() const { return m_Size; }
+	uint64_t Size() const { return m_Size; }
 
-    void SetMemory(const void* _data, VkDeviceSize _allocationSize);
+    void SetMemory(const void* _data, VkDeviceSize _allocationSize) const;
 
 	operator const VkBuffer& () const { return m_Buffer; }
 
@@ -24,7 +34,7 @@ private:
 	VkBuffer m_Buffer;
 	VkDeviceMemory m_DeviceMemory;
 	VkDeviceSize m_Size;
-    const void* m_Data;
+	Ref<VulkanDevice> m_VulkanDevice;
 };
 
 DODO_END_NAMESPACE

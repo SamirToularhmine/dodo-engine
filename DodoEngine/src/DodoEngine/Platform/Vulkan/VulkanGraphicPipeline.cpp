@@ -162,4 +162,19 @@ VulkanGraphicPipeline::~VulkanGraphicPipeline()
     vkDestroyPipeline(*m_VulkanDevice, m_VkPipeline, nullptr);
 }
 
+void VulkanGraphicPipeline::Bind(const VkCommandBuffer& _vkCommandBuffer) const
+{
+    vkCmdBindPipeline(_vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkPipeline);
+
+    vkCmdSetViewport(_vkCommandBuffer, 0, 1, &m_Viewport);
+    vkCmdSetScissor(_vkCommandBuffer, 0, 1, &m_Scissor);
+}
+
+void VulkanGraphicPipeline::SetViewPort(const VulkanSwapChainData& swapChainSpec){
+    const VkExtent2D extent = swapChainSpec.m_VkExtent;
+    m_Viewport.width = extent.width;
+    m_Viewport.height = extent.height;
+    m_Scissor.extent = extent;
+}
+
 DODO_END_NAMESPACE

@@ -1,5 +1,8 @@
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
+#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
+
 #include <DodoEngine/Utils/Log.h>
 
 #include <set>
@@ -13,7 +16,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& _vkPhysicalDevice, const 
     QueueFamilyIndices queueFamilyIndices = deviceQueues.m_QueueFamilyIndices;
 
     std::vector<VkDeviceQueueCreateInfo> deviceQueuesCreateInfo{};
-    std::set<QueueIndex> supportedQueueTypesIndex = {
+    std::set supportedQueueTypesIndex = {
         queueFamilyIndices.graphicsFamily.value(),
         queueFamilyIndices.presentFamily.value()
     };

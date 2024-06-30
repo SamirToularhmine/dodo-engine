@@ -1,5 +1,7 @@
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+
 #include <DodoEngine/Utils/Log.h>
 
 

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
-#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 
 #include <volk.h>
 
@@ -11,6 +9,9 @@
 
 
 DODO_BEGIN_NAMESPACE
+
+class VulkanInstance;
+class VulkanSurface;
 
 using QueueIndex = uint32_t;
 

@@ -11,6 +11,9 @@ project(
 add_executable(${target} src/main.cpp)
 target_link_libraries(${target} PUBLIC DodoEngine)
 
+target_compile_options(${target} PRIVATE -fsanitize=address)
+target_link_options(${target} PRIVATE -fsanitize=address)
+
 add_custom_command(
         TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -18,4 +21,5 @@ add_custom_command(
             "$<TARGET_PROPERTY:${target},BINARY_DIR>/resources"
         COMMENT "copying ${CMAKE_BINARY_DIR}"
 )
+
 set_property(TARGET SandboxApp PROPERTY CXX_STANDARD 23)

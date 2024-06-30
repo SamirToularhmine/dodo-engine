@@ -1,4 +1,6 @@
 #include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
+
+#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
 #include <DodoEngine/Utils/Log.h>
 
 #include <GLFW/glfw3.h>
@@ -15,8 +17,6 @@ VulkanSurface::VulkanSurface(Ref<VulkanInstance> _vulkanInstance, GLFWwindow* _g
     {
         DODO_CRITICAL("Cannot create the window surface from the provided GLFWwindow and the current Vulkan instance");
     }
-
-    
 }
 
 VulkanSurface::~VulkanSurface()

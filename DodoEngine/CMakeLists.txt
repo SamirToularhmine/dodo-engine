@@ -36,8 +36,11 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST})
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} "src/DodoEngine/Core/InputManager.h" "src/DodoEngine/Core/InputManager.cpp" "src/DodoEngine/Core/Key.h" "src/DodoEngine/Core/GlfwCallbacks.h" "src/DodoEngine/Core/Camera.h" "src/DodoEngine/Core/Camera.cpp" "src/DodoEngine/Renderer/MeshTransform.h")
 target_link_libraries(DodoEngine glfw volk glm)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
+
+target_compile_options(DodoEngine PRIVATE -fsanitize=address)
+target_link_options(DodoEngine PRIVATE -fsanitize=address)
 
 set_property(TARGET DodoEngine PROPERTY CXX_STANDARD 23)

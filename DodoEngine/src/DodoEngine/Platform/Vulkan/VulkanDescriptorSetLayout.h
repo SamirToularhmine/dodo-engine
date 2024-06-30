@@ -1,12 +1,13 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 
 #include <volk.h>
 
 
 DODO_BEGIN_NAMESPACE
+
+class VulkanDevice;
 
 class VulkanDescriptorSetLayout 
 {

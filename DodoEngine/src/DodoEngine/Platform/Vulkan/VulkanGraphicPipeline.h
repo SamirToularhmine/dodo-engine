@@ -1,5 +1,7 @@
 #pragma once
 
+#include "VulkanContext.h"
+
 #include <DodoEngine/Core/Types.h>
 
 #include <volk.h>
@@ -23,9 +25,12 @@ public:
 
     const VkViewport& GetViewPort() const { return m_Viewport; }
     const VkRect2D& GetScissor() const { return m_Scissor; }
+    VkPipelineLayout GetPipelineLayout() const { return m_VkPipelineLayout; }
+
+	void Bind(const VkCommandBuffer& _vkCommandBuffer) const;
 
     operator const VkPipeline& () const { return m_VkPipeline; }
-    VkPipelineLayout GetPipelineLayout() const { return m_VkPipelineLayout; };
+    void SetViewPort(const VulkanSwapChainData& swapChainSpec);
 private:
     VkPipeline m_VkPipeline;
     VkPipelineLayout m_VkPipelineLayout;

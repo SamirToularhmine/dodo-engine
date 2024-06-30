@@ -1,13 +1,12 @@
 #include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 #include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Log.h>
 
-#include "VulkanContext.h"
-
 DODO_BEGIN_NAMESPACE
-	VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanSwapChainData& _swapChainData)
+VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanSwapChainData& _swapChainData)
 	: m_VulkanDevice(_vulkanDevice)
 {
     VkAttachmentDescription colorAttachment{};
@@ -66,7 +65,7 @@ void VulkanRenderPass::Begin(const VulkanRenderPassData& _vulkanRenderPassData) 
     renderPassBeginInfo.renderArea.offset = { 0, 0 };
     renderPassBeginInfo.renderArea.extent = _vulkanRenderPassData.m_SwapChainData.m_VkExtent;
 
-    VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+    VkClearValue clearColor = { {{	0.694f, 0.686f, 1.0f, 1.0f}} };
     renderPassBeginInfo.clearValueCount = 1;
     renderPassBeginInfo.pClearValues = &clearColor;
 

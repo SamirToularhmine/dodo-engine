@@ -2,31 +2,32 @@
 
 #include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
 #include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
-#include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
-#include <DodoEngine/Platform/Vulkan/VulkanInstance.h>
-#include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
-#include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
-#include <DodoEngine/Platform/Vulkan/VulkanSurface.h>
 #include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Utils.h>
 
 #include <volk.h>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 
 #include <vector>
 
 
 DODO_BEGIN_NAMESPACE
 
+class VulkanInstance;
+class VulkanSurface;
+class VulkanPhysicalDevice;
+class VulkanDevice;
+class VulkanSwapChain;
+class VulkanRenderPass;
+class VulkanGraphicPipeline;
+class VulkanDescriptorPool;
+class VulkanDescriptorSet;
+class VulkanDescriptorSetLayout;
+struct VulkanSwapChainData;
+
 struct VulkanRenderPassData
 {
-    uint32_t m_FrameCount{ 0 };
+    uint32_t m_FrameCount;
     uint32_t m_ImageIndex{ 0 };
     uint32_t m_FrameIndex{ 0 };
     VkCommandBuffer m_CommandBuffer;
@@ -35,10 +36,12 @@ struct VulkanRenderPassData
     VkPipelineLayout m_PipelineLayout;
     Ref<VulkanDescriptorSet> m_DescriptorSet;
     bool m_RenderPassStarted{ false };
+
+    VulkanRenderPassData(uint32_t _frameCount) : m_FrameCount(_frameCount) { }
 };
 
 class VulkanContext : public GraphicContext {
-    using Framebuffers = std::vector<VulkanFrameBuffer>;
+    using FrameBuffers = std::vector<VulkanFrameBuffer>;
 
 public:
     static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -79,7 +82,7 @@ private:
         Ref<VulkanDescriptorSetLayout> m_VulkanDescriptorSetLayout;
 
         GLFWwindow* m_NativeWindow;
-        Framebuffers m_VkFramebuffers;
+        FrameBuffers m_VkFramebuffers;
         VkCommandPool m_VkCommandPool;
         std::vector<VkCommandBuffer> m_VkCommandBuffers;
         std::vector<VkSemaphore> m_VkImagesAvailable;
