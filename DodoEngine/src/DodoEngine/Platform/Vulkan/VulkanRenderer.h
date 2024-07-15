@@ -1,9 +1,14 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
+#include <DodoEngine/Debug/ImGuiLayer.h>
+#include <DodoEngine/Platform/Vulkan/VulkanContext.h>
+#include <DodoEngine/Renderer/Model.h>
 #include <DodoEngine/Renderer/Renderer.h>
+#include <DodoEngine/Renderer/Texture.h>
 #include <DodoEngine/Renderer/UniformBufferObject.h>
 
+#include <map>
 #include <vector>
 
 class GLFWwindow;
@@ -15,44 +20,66 @@ class VulkanBuffer;
 class VulkanContext;
 class VulkanDescriptorSet;
 struct VulkanSwapChainData;
+struct VulkanRenderPassData;
 
-struct RendererData
-{
-    std::vector<glm::mat4> m_QuadTransforms;
+struct RendererData {
+  std::map<ModelId, std::vector<glm::mat4>> m_ModelsTransform;
+  std::map<ModelId, Ref<Model>> m_ModelsToDraw;
+  std::map<TextureId, Ref<Texture>> m_ModelsTexture;
+  VulkanRenderPassData m_RenderPassData{0};
+
+  std::vector<Ref<Texture>> NeededTextures() const {
+    std::vector<Ref<Texture>> neededTextures;
+    for (const auto& [textureId, texture] : m_ModelsTexture) {
+      neededTextures.push_back(texture);
+    }
+
+    return neededTextures;
+  }
+
+  void ResetTransforms() { m_ModelsTransform.clear(); }
+
+  void Clear() {
+    ResetTransforms();
+    m_ModelsToDraw.clear();
+    m_ModelsTexture.clear();
+  }
 };
 
-class VulkanRenderer : public Renderer
-{
-public:
-	VulkanRenderer(VulkanContext& _vulkanContext);
+class VulkanRenderer : public Renderer {
+ public:
+  VulkanRenderer(VulkanContext& _vulkanContext);
 
-	~VulkanRenderer() override = default;
+  ~VulkanRenderer() override = default;
 
-	void Init(GLFWwindow* _nativeWindow) override;
+  void Init(const Window& _window) override;
+  void Update(const Camera& _camera, float _deltaTime) override;
+  void Shutdown() override;
 
-	void Update(const Camera& _camera, float _deltaTime) override;
+  void BeginRenderPass() override;
 
-	void Shutdown() override;
+  void EndRenderPass() override;
 
-	void DrawQuad(const MeshTransform& _meshTransform) override;
+  void RegisterModel(Ref<Model>& _mesh) override;
 
-private:
-    static UniformBufferObject GetUniformBufferObject(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime);
+  void DrawQuad(const MeshTransform& _meshTransform) override;
 
-private:
-    VulkanContext& m_VulkanContext;
-    uint32_t m_FrameCount{ 0 };
+  void DrawCube(const MeshTransform& _meshTransform) override;
 
-    std::vector<VulkanBuffer> m_VertexBuffers;
-    std::vector<VulkanBuffer> m_IndicesBuffers;
-    Ref<VulkanBuffer> m_UniformBuffer;
+  void DrawModel(Ref<Model>& _mesh, const MeshTransform& _meshTransform) override;
 
-    Ref<VulkanDescriptorSet> m_VulkanDescriptorSet;
+  uint32_t GetFrameIndex() const override;
 
-    UniformBufferObject m_UniformMvp;
+ private:
+  std::vector<UniformBufferObject> BatchMvpUbo(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime);
 
-    RendererData m_RendererData;
-
+ private:
+  VulkanContext& m_VulkanContext;
+  uint32_t m_FrameCount{0};
+  Ref<VulkanBuffer> m_UniformBuffer;
+  UniformBufferObject m_UniformMvp;
+  Ref<VulkanDescriptorSet> m_VulkanDescriptorSet;
+  RendererData m_RendererData;
 };
 
 DODO_END_NAMESPACE

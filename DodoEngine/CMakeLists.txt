@@ -7,9 +7,7 @@ project(
     LANGUAGES CXX
 )
 
-set(INCLUDE_LIST "src" "/usr/local/include")
-file(GLOB_RECURSE SOURCE_LIST *.cpp)
-file(GLOB_RECURSE HEADER_LIST *.h)
+set(CMAKE_BUILD_TYPE Debug)
 
 # GLFW
 FetchContent_Declare(
@@ -17,7 +15,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 7b6aead9fb88b3623e3b3725ebb42670cbe4c579
 )
-FetchContent_MakeAvailable(glfw)
 
 # Volk loader
 FetchContent_Declare(
@@ -25,22 +22,76 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/zeux/volk.git
     GIT_TAG master
 )
-FetchContent_MakeAvailable(volk)
 
 # GLM
-# Volk loader
 FetchContent_Declare(
     glm
     GIT_REPOSITORY git@github.com:g-truc/glm.git
     GIT_TAG 0af55ccecd98d4e5a8d1fad7de25ba429d60e863
 )
-FetchContent_MakeAvailable(glm)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} "src/DodoEngine/Core/InputManager.h" "src/DodoEngine/Core/InputManager.cpp" "src/DodoEngine/Core/Key.h" "src/DodoEngine/Core/GlfwCallbacks.h" "src/DodoEngine/Core/Camera.h" "src/DodoEngine/Core/Camera.cpp" "src/DodoEngine/Renderer/MeshTransform.h")
-target_link_libraries(DodoEngine glfw volk glm)
+# Vulkan Memory Allocator
+FetchContent_Declare(
+    VulkanMemoryAllocator 
+    GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+    GIT_TAG 009ecd192c1289c7529bff248a16cfe896254816
+)
+
+# libdeflate
+FetchContent_Declare(
+    libdeflate
+    GIT_REPOSITORY git@github.com:ebiggers/libdeflate.git
+    GIT_TAG 275aa5141db6eda3587214e0f1d3a134768f557d
+    OVERRIDE_FIND_PACKAGE
+)
+
+# OpenFBX
+FetchContent_Declare(
+    OpenFBX 
+    GIT_REPOSITORY git@github.com:nem0/OpenFBX.git
+    GIT_TAG ef492927cefc16ad8733ec08bcc8df5434dbb1ae
+)
+
+# tinyobjloader
+FetchContent_Declare(
+    tinyobjloader 
+    GIT_REPOSITORY git@github.com:tinyobjloader/tinyobjloader.git
+    GIT_TAG 9d9594598a99d4d7d7039bc504f7b05b490596c4
+)
+
+# ImGui
+FetchContent_Declare(
+    imgui 
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG cb16be3a3fc1f9cd146ae24d52b615f8a05fa93d
+)
+
+# tinygltf
+FetchContent_Declare(
+    tinygltf 
+    GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+    GIT_TAG fea67861296293e33e6caee81682261a2700136a
+)
+
+FetchContent_MakeAvailable(glfw volk glm VulkanMemoryAllocator OpenFBX tinyobjloader imgui tinygltf)
+
+set(IMGUI_SOURCE_LIST
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
+
+set(INCLUDE_LIST "src" "vendor" "/usr/local/include" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+file(GLOB_RECURSE SOURCE_LIST *.cpp *.c)
+file(GLOB_RECURSE HEADER_LIST *.h)
+
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST} "src/DodoEngine/Renderer/GltfLoader.h" "src/DodoEngine/Renderer/GltfLoader.cpp" "src/DodoEngine/Renderer/Model.h" "src/DodoEngine/Renderer/TextureManager.h" "src/DodoEngine/Renderer/TextureManager.cpp")
+target_link_libraries(DodoEngine glfw volk glm VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
+target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
-
-target_compile_options(DodoEngine PRIVATE -fsanitize=address)
-target_link_options(DodoEngine PRIVATE -fsanitize=address)
 
 set_property(TARGET DodoEngine PROPERTY CXX_STANDARD 23)

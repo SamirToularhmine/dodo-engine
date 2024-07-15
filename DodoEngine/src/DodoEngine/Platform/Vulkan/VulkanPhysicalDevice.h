@@ -45,6 +45,10 @@ public:
 
     uint32_t FindMemoryType(uint32_t _typeFilter, VkMemoryPropertyFlags properties) const;
 
+    VkPhysicalDeviceProperties GetProperties() const;
+
+    VkFormatProperties GetFormatProperties(VkFormat _format) const;
+
     operator const VkPhysicalDevice&() const { return m_VkPhysicalDevice; }
 
 private:

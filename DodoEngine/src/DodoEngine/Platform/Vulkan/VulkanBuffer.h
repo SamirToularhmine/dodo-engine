@@ -1,40 +1,56 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
+#include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 
 #include <volk.h>
-
+#include <vk_mem_alloc.h>
 
 DODO_BEGIN_NAMESPACE
 
 class VulkanDevice;
 class VulkanPhysicalDevice;
 
-struct VulkanBufferSpec
-{
-	VkDeviceSize m_AllocationSize;
-	VkBufferCreateFlags m_Usage;
-	VkMemoryPropertyFlags m_Properties;
+struct VulkanBufferSpec {
+  VkDeviceSize m_AllocationSize;
+  VkBufferCreateFlags m_Usage;
+  VkMemoryPropertyFlags m_Properties;
 };
 
-class VulkanBuffer
-{
-public:
-	VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec, const Ref<VulkanDevice>& _vulkanDevice, const VulkanPhysicalDevice& _vulkanPhysicalDevice);
+class VulkanBuffer {
+ public:
+  static constexpr VkMemoryPropertyFlags DEFAULT_MEMORY_PROPERTY_FLAGS = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-	~VulkanBuffer();
+  VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec);
 
-	uint64_t Size() const { return m_Size; }
+  ~VulkanBuffer();
 
-    void SetMemory(const void* _data, VkDeviceSize _allocationSize) const;
+  uint64_t Size() const { return m_Size; }
 
-	operator const VkBuffer& () const { return m_Buffer; }
+  template <typename T>
+  void SetMemory(const T* _data, VkDeviceSize _allocationSize) {
+    const VulkanContext& vulkanContext = VulkanContext::Get();
+    const VmaAllocator& allocator = vulkanContext.GetAllocator();
 
-private:
-	VkBuffer m_Buffer;
-	VkDeviceMemory m_DeviceMemory;
-	VkDeviceSize m_Size;
-	Ref<VulkanDevice> m_VulkanDevice;
+    m_ElementCount = _allocationSize / sizeof(T);
+    void* mappedData;
+    vmaMapMemory(allocator, m_Allocation, &mappedData);
+    memcpy(mappedData, _data, _allocationSize);
+    vmaUnmapMemory(allocator, m_Allocation);
+  }
+
+  const uint32_t GetElementCount() const { return m_ElementCount; };
+
+  operator const VkBuffer&() const { return m_Buffer; }
+
+ public:
+  static void CopyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
+
+ private:
+  VkBuffer m_Buffer;
+  VmaAllocation m_Allocation;
+  VkDeviceSize m_Size;
+  uint32_t m_ElementCount;
 };
 
 DODO_END_NAMESPACE

@@ -1,10 +1,17 @@
 #include <DodoEngine/Platform/Vulkan/VulkanRenderer.h>
 
 #include <DodoEngine/Core/Camera.h>
+#include <DodoEngine/Core/Window.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
+#include <DodoEngine/Platform/Vulkan/VulkanTextureImage.h>
+#include <DodoEngine/Renderer/Mesh.h>
+#include <DodoEngine/Renderer/MeshTransform.h>
+#include <DodoEngine/Renderer/Model.h>
 #include <DodoEngine/Renderer/Quad.h>
+#include <DodoEngine/Renderer/RendererPushConstants.h>
+#include <DodoEngine/Renderer/Texture.h>
 #include <DodoEngine/Renderer/UniformBufferObject.h>
 
 #include <GLFW/glfw3.h>
@@ -13,95 +20,134 @@
 
 #include <memory>
 
-
 DODO_BEGIN_NAMESPACE
 
-VulkanRenderer::VulkanRenderer(VulkanContext& _vulkanContext)
-	: m_VulkanContext(_vulkanContext)
-{
+VulkanRenderer::VulkanRenderer(VulkanContext& _vulkanContext) : m_VulkanContext(_vulkanContext) {}
+
+void VulkanRenderer::Init(const Window& _window) {
+  m_VulkanContext.Init(_window);
+
+  // Uniform buffer
+  m_UniformBuffer = std::make_shared<VulkanBuffer>(
+      VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
 }
 
-void VulkanRenderer::Init(GLFWwindow* _nativeWindow)
-{
-	m_VulkanContext.Init(_nativeWindow);
+void VulkanRenderer::Update(const Camera& _camera, float _deltaTime) {
+  DODO_TRACE(VulkanRenderer);
 
-	const Ref<VulkanDevice>& vulkanDevice = m_VulkanContext.GetVulkanDevice();
-	const VulkanPhysicalDevice& vulkanPhysicalDevice = *m_VulkanContext.GetVulkanPhysicalDevice();
+  VulkanRenderPassData& renderPassData = m_RendererData.m_RenderPassData;
+  const Ref<VulkanDescriptorSet>& descriptorSet = renderPassData.m_DescriptorSet;
+  const VkCommandBuffer& commandBuffer = renderPassData.m_CommandBuffer;
 
-	constexpr VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+  BatchMvpUbo(_camera, renderPassData.m_SwapChainData, _deltaTime);
+  descriptorSet->UpdateDescriptor(*m_UniformBuffer, m_RendererData.NeededTextures(), renderPassData.m_FrameIndex);
+  descriptorSet->Bind(renderPassData);
 
-	// Quad Vertex buffer
-	m_VertexBuffers.emplace_back(
-		 VulkanBufferSpec { sizeof(Vertex) * QUAD_VERTICES.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, memoryPropertyFlags }, vulkanDevice, vulkanPhysicalDevice
-	);
-	m_VertexBuffers[0].SetMemory(QUAD_VERTICES.data(), sizeof(Vertex) * QUAD_VERTICES.size());
+  uint32_t modelId = 0;
 
-	// Quad index buffer
-	m_IndicesBuffers.emplace_back(
-		VulkanBufferSpec { sizeof(uint16_t) * QUAD_INDICES.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, memoryPropertyFlags }, vulkanDevice, vulkanPhysicalDevice
-	);
-	m_IndicesBuffers[0].SetMemory(QUAD_INDICES.data(), sizeof(uint16_t) * QUAD_INDICES.size());
+  // Draw Meshes
+  for (const auto& [id, model] : m_RendererData.m_ModelsToDraw) {
+    std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes), [&](const Ref<Mesh>& _mesh) {
+      const Ref<Texture>& texture = _mesh->m_Texture;
+      const Ptr<VulkanTextureImage>& textureImage = texture->GetTextureImage();
+      const uint32_t instanceCount = m_RendererData.m_ModelsTransform[id].size();
 
-	// Uniform buffer
-	m_UniformBuffer = std::make_shared<VulkanBuffer>(VulkanBufferSpec { sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, memoryPropertyFlags }, vulkanDevice, vulkanPhysicalDevice);
+      RendererPushConstants rendererPushConstants{.m_ModelId = modelId++, .m_TextureId = texture->GetId()};
+      vkCmdPushConstants(commandBuffer, renderPassData.m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RendererPushConstants), &rendererPushConstants);
+
+      const VulkanBuffer& _vertexBuffer = *_mesh->m_VertexBuffer;
+      VkBuffer vertexBuffers[] = {_vertexBuffer};
+      VkDeviceSize offsets[] = {0};
+      vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+      uint32_t elementCount = _vertexBuffer.GetElementCount();
+
+      if (_mesh->IsIndexed()) {
+        const VulkanBuffer& _indexBuffer = *_mesh->m_IndicesBuffer;
+        vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(commandBuffer, _indexBuffer.GetElementCount(), instanceCount, 0, 0, 0);
+      } else {
+        vkCmdDraw(commandBuffer, elementCount, instanceCount, 0, 0);
+      }
+    });
+  }
 }
 
-void VulkanRenderer::Update(const Camera& _camera, float _deltaTime)
-{
-	VulkanRenderPassData vulkanRenderPassData{m_FrameCount++};
-	m_VulkanContext.BeginRenderPass(vulkanRenderPassData);
-
-	if(!vulkanRenderPassData.m_RenderPassStarted)
-	{
-		return;
-	}
-	
-	const Ref<VulkanDescriptorSet>& descriptorSet = vulkanRenderPassData.m_DescriptorSet;
-	const VkCommandBuffer& commandBuffer = vulkanRenderPassData.m_CommandBuffer;
-
-	m_UniformMvp = GetUniformBufferObject(_camera, vulkanRenderPassData.m_SwapChainData, _deltaTime);
-	m_UniformBuffer->SetMemory(&m_UniformMvp, sizeof(UniformBufferObject));
-	descriptorSet->UpdateDescriptor(*m_UniformBuffer, vulkanRenderPassData.m_FrameIndex);
-
-	for(uint32_t  i = 0; i < m_VertexBuffers.size(); ++i)
-	{
-		const VulkanBuffer& _vertexBuffer = m_VertexBuffers[i];
-		const VulkanBuffer& _indexBuffer = m_IndicesBuffers[i];
-
-		VkBuffer vertexBuffers[] = { _vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
-		descriptorSet->Bind(vulkanRenderPassData);
-
-		vkCmdDrawIndexed(commandBuffer, QUAD_INDICES.size(), 1, 0, 0, 0);
-	}
-
-	m_VulkanContext.EndRenderPass(vulkanRenderPassData);
+void VulkanRenderer::Shutdown() {
+  m_RendererData.Clear();
+  m_UniformBuffer.reset();
+  TextureManager::Shutdown();
+  m_VulkanContext.Shutdown();
 }
 
-void VulkanRenderer::Shutdown()
-{
-	m_VulkanContext.Shutdown();
+void VulkanRenderer::BeginRenderPass() {
+  DODO_TRACE(VulkanRenderer);
+
+  m_RendererData.m_RenderPassData = {m_FrameCount++};
+  m_VulkanContext.BeginRenderPass(m_RendererData.m_RenderPassData);
 }
 
-void VulkanRenderer::DrawQuad(const MeshTransform& _meshTransform)
-{
-	
+void VulkanRenderer::EndRenderPass() {
+  DODO_TRACE(VulkanRenderer);
+
+  m_VulkanContext.EndRenderPass(m_RendererData.m_RenderPassData);
+  m_RendererData.ResetTransforms();
 }
 
-UniformBufferObject VulkanRenderer::GetUniformBufferObject(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime) {
-    const VkExtent2D extent = _vulkanSwapChainData.m_VkExtent;
-	glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), extent.width / static_cast<float>(extent.height), 0.1f, 10.0f);
-	projectionMatrix[1][1] *= -1;
+void VulkanRenderer::RegisterModel(Ref<Model>& _model) {
+  m_RendererData.m_ModelsToDraw[_model->m_Id] = _model;
 
-    return {
-        rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-		_camera.GetViewMatrix(),
-		projectionMatrix    
-    };
+  for (const auto& _mesh : _model->m_Meshes) {
+    Ref<Texture> meshTexture = _mesh->m_Texture;
+    const TextureId& textureId = meshTexture->GetId();
+    if (!m_RendererData.m_ModelsTexture.contains(textureId))
+    {
+      m_RendererData.m_ModelsTexture[textureId] = meshTexture;
+    }
+  }
+}
+
+void VulkanRenderer::DrawQuad(const MeshTransform& _meshTransform) {
+  m_RendererData.m_ModelsTransform[0].push_back(_meshTransform.GetModelMatrix());
+}
+
+void VulkanRenderer::DrawCube(const MeshTransform& _meshTransform) {
+  m_RendererData.m_ModelsTransform[1].push_back(_meshTransform.GetModelMatrix());
+}
+
+void VulkanRenderer::DrawModel(Ref<Model>& _model, const MeshTransform& _meshTransform) {
+  const glm::mat4 modelMatrix = _meshTransform.GetModelMatrix();
+  const ModelId modelId = _model->m_Id;
+  if (!m_RendererData.m_ModelsToDraw.contains(modelId)) {
+    RegisterModel(_model);
+  }
+
+  m_RendererData.m_ModelsTransform[modelId].push_back(modelMatrix);
+}
+
+uint32_t VulkanRenderer::GetFrameIndex() const {
+  return m_RendererData.m_RenderPassData.m_FrameIndex;
+}
+
+std::vector<UniformBufferObject> VulkanRenderer::BatchMvpUbo(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime) {
+  DODO_TRACE(VulkanRenderer);
+
+  std::vector<UniformBufferObject> batchUbo;
+  const VkExtent2D extent = _vulkanSwapChainData.m_VkExtent;
+  uint32_t lastTransform = 0;
+  for (const auto& [modelId, transforms] : m_RendererData.m_ModelsTransform) {
+    for (int i = 0; i < transforms.size(); ++i) {
+      m_UniformMvp.m_ModelTransforms[lastTransform++] = transforms[i];
+    }
+  }
+
+  m_UniformMvp.m_View = _camera.GetViewMatrix();
+  m_UniformMvp.m_Proj = _camera.GetProjectionMatrix({extent.width, extent.height});
+
+  batchUbo.push_back(m_UniformMvp);
+
+  m_UniformBuffer->SetMemory(&m_UniformMvp, sizeof(UniformBufferObject));
+
+  return batchUbo;
 }
 
 DODO_END_NAMESPACE

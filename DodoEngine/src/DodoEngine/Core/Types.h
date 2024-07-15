@@ -9,10 +9,10 @@
 
 DODO_BEGIN_NAMESPACE
 
-template<typename T>
+template <typename T>
 using Ref = std::shared_ptr<T>;
 
-template<typename T>
+template <typename T>
 using Ptr = std::unique_ptr<T>;
 
 DODO_END_NAMESPACE

@@ -3,9 +3,7 @@
 #include <DodoEngine/Core/Types.h>
 
 #include <volk.h>
-
-
-class GLFWwindow;
+#include <GLFW/glfw3.h>
 
 DODO_BEGIN_NAMESPACE
 

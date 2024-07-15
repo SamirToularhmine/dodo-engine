@@ -12,7 +12,6 @@ DODO_BEGIN_NAMESPACE
 VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& _vkPhysicalDevice, const VulkanInstance& _vkInstance)
 {
     const QueuesInfo& deviceQueues = _vkPhysicalDevice.GetQueues();
-    VkPhysicalDeviceFeatures deviceFeatures{};
     QueueFamilyIndices queueFamilyIndices = deviceQueues.m_QueueFamilyIndices;
 
     std::vector<VkDeviceQueueCreateInfo> deviceQueuesCreateInfo{};
@@ -32,11 +31,14 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& _vkPhysicalDevice, const 
     }
 
     VulkanExtensions requiredDeviceExtension = {
-        //"VK_KHR_portability_subset",
+        // "VK_KHR_portability_subset",
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
     VulkanValidationLayers requestedValidationLayers = _vkInstance.GetValidationLayers();
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo deviceCreateInfo{};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

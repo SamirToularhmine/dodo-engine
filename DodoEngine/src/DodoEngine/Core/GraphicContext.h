@@ -2,20 +2,19 @@
 
 #include <DodoEngine/Utils/Utils.h>
 
-class GLFWwindow;
-
 DODO_BEGIN_NAMESPACE
 
-class GraphicContext 
-{
-public:
-    virtual void Init(GLFWwindow* _window) = 0;
-    
-    virtual void Update(uint32_t _frameId) = 0;
+class Window;
 
-    virtual void Shutdown() = 0;
+class GraphicContext {
+ public:
+  virtual void Init(const Window& _window) = 0;
 
-    virtual ~GraphicContext() = default;
+  virtual void Update(uint32_t _frameId) = 0;
+
+  virtual void Shutdown() = 0;
+
+  virtual ~GraphicContext() = default;
 };
 
 DODO_END_NAMESPACE

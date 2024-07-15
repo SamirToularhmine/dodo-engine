@@ -2,26 +2,39 @@
 
 #include <DodoEngine/Core/Types.h>
 
-
-class GLFWwindow;
-
 DODO_BEGIN_NAMESPACE
 
 class Camera;
+struct Model;
 struct MeshTransform;
+class Window;
 
-class Renderer
-{
-public:
-	virtual void Init(GLFWwindow* _nativeWindow) = 0;
+class Renderer {
+ public:
+  static constexpr uint32_t MAX_MODEL_COUNT = 1'022;
 
-	virtual void Update(const Camera& _camera, float _deltaTime) = 0;
+ public:
+  virtual void Init(const Window& _window) = 0;
 
-	virtual void Shutdown() = 0;
+  virtual void Update(const Camera& _camera, float _deltaTime) = 0;
 
-	virtual void DrawQuad(const MeshTransform& _meshTransform) = 0;
+  virtual void Shutdown() = 0;
 
-	virtual ~Renderer() = default;
+  virtual void RegisterModel(Ref<Model>& _mesh) = 0;
+
+  virtual void DrawQuad(const MeshTransform& _meshTransform) = 0;
+
+  virtual void DrawCube(const MeshTransform& _meshTransform) = 0;
+
+  virtual void DrawModel(Ref<Model>& _model, const MeshTransform& _meshTransform) = 0;
+
+  virtual void BeginRenderPass() = 0;
+
+  virtual void EndRenderPass() = 0;
+
+  virtual uint32_t GetFrameIndex() const = 0;
+
+  virtual ~Renderer() = default;
 };
 
 DODO_END_NAMESPACE

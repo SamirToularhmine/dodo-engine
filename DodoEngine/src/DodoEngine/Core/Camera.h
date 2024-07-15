@@ -4,30 +4,40 @@
 
 #include <glm/glm.hpp>
 
-
 DODO_BEGIN_NAMESPACE
 
-class Camera
-{
-public:
-	Camera(glm::vec3 _position);
+struct CameraPerformanceStats {
+  float m_UpdateFrameTime{0.0f};
+};
 
-	~Camera() = default;
+class Camera {
+ public:
+  static constexpr float FAR_PLANE = 100.0f;
+  static constexpr float NEAR_PLANE = 0.01f;
+  static CameraPerformanceStats s_CameraPerformanceStats;
 
-	void Update(float _deltaTime);
+  Camera(glm::vec3 _position);
 
-	glm::mat4 GetViewMatrix() const;
+  ~Camera() = default;
 
-private:
-	static constexpr double MOUSE_SENSITIVITY = 10.0;
+  void Update(float _deltaTime);
 
-	glm::vec3 m_Position;
+  glm::mat4 GetViewMatrix() const;
 
-	float m_Pitch;
-	float m_Yaw;
-	float m_Roll;
+  glm::mat4 GetProjectionMatrix(const glm::vec2& extent) const;
 
-	float m_Distance;
+  static CameraPerformanceStats GetPerformanceStats() { return s_CameraPerformanceStats; };
+
+ private:
+  static constexpr double MOUSE_SENSITIVITY = 10.0;
+
+  glm::vec3 m_Position;
+
+  float m_Pitch;
+  float m_Yaw;
+  float m_Roll;
+
+  float m_Distance;
 };
 
 DODO_END_NAMESPACE

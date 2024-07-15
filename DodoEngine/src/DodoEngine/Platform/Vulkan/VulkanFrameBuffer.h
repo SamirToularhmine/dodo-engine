@@ -4,6 +4,7 @@
 
 #include <volk.h>
 
+#include <vector>
 
 DODO_BEGIN_NAMESPACE
 
@@ -11,18 +12,18 @@ class VulkanDevice;
 class VulkanRenderPass;
 struct VulkanSwapChainData;
 
-class VulkanFrameBuffer
-{
-public:
-	VulkanFrameBuffer(Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPass& _vulkanRenderPass, const VkImageView _attachments[], const VulkanSwapChainData& _swapChainData);
+class VulkanFrameBuffer {
+ public:
+  VulkanFrameBuffer(Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPass& _vulkanRenderPass, const std::vector<VkImageView>& _attachments,
+                    const VulkanSwapChainData& _swapChainData);
 
-	~VulkanFrameBuffer();
+  ~VulkanFrameBuffer();
 
-	operator const VkFramebuffer& () const { return m_FrameBuffer; }
+  operator const VkFramebuffer&() const { return m_FrameBuffer; }
 
-private:
-	VkFramebuffer m_FrameBuffer;
-	Ref<VulkanDevice> m_VulkanDevice;
+ private:
+  VkFramebuffer m_FrameBuffer;
+  Ref<VulkanDevice> m_VulkanDevice;
 };
 
 DODO_END_NAMESPACE

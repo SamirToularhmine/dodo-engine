@@ -26,6 +26,7 @@ private:
     VkInstance m_VkInstance;
     VulkanExtensions m_InstanceExtensions;
     VulkanValidationLayers m_ValidationLayers;
+    VkDebugUtilsMessengerEXT m_VulkanMessenger;
 };
 
 DODO_END_NAMESPACE
