@@ -1,11 +1,13 @@
 #include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
 
+#include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 #include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
 #include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Renderer/RendererPushConstants.h>
 #include <DodoEngine/Renderer/RendererSpecializationData.h>
+#include <DodoEngine/Renderer/ShaderManager.h>
 #include <DodoEngine/Renderer/Vertex.h>
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
@@ -14,31 +16,14 @@
 
 DODO_BEGIN_NAMESPACE
 
-VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, VkDescriptorSetLayout& _vkDescriptorSetLayout,
-                                             const VulkanSwapChainData& _swapChainData, const VulkanRenderPass& _vulkanRenderPass)
-    : m_VulkanDevice(_vulkanDevice) {
-  // Loading shader
-  std::vector<char> vertexShaderFile = readFile("resources/shaders/vert.spv");
-  std::vector<char> fragmentShaderFile = readFile("resources/shaders/frag.spv");
+VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecification& _vulkanPipelineSpec, const VulkanSwapChainData& _swapChainData)
+    : m_VulkanDescriptorSetLayout(std::move(_vulkanPipelineSpec.m_VulkanDescriptorSetLayout)) {
+  const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
+  const Ref<VulkanRenderPass>& vulkanRenderPass = VulkanContext::Get().GetRenderPass();
 
-  // Vertex Shader
-  VkShaderModuleCreateInfo vertexShaderModuleCreateInfo{};
-  vertexShaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  vertexShaderModuleCreateInfo.codeSize = vertexShaderFile.size();
-  vertexShaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(vertexShaderFile.data());
-
-  // Fragment Shader
-  VkShaderModuleCreateInfo fragmentShaderModuleCreateInfo{};
-  fragmentShaderModuleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  fragmentShaderModuleCreateInfo.codeSize = fragmentShaderFile.size();
-  fragmentShaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(fragmentShaderFile.data());
-
-  VkResult vertexShaderModuleCreateResult = vkCreateShaderModule(*_vulkanDevice, &vertexShaderModuleCreateInfo, nullptr, &m_VertexShaderModule);
-  VkResult fragmentShaderModuleCreateResult = vkCreateShaderModule(*_vulkanDevice, &fragmentShaderModuleCreateInfo, nullptr, &m_FragmentShaderModule);
-
-  if (vertexShaderModuleCreateResult != VK_SUCCESS || fragmentShaderModuleCreateResult != VK_SUCCESS) {
-    DODO_CRITICAL("Could not create shader modules");
-  }
+  // Loading default shader
+  m_VertexShaderModule = _vulkanPipelineSpec.m_VertexShaderModule;
+  m_FragmentShaderModule = _vulkanPipelineSpec.m_FragmentShaderModule;
 
   RendererSpecializationData rendererSpecializationData{};
   std::vector<VkSpecializationMapEntry> rendererSpecializationMapEntries = rendererSpecializationData.GetMapEntries();
@@ -111,7 +96,7 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, Vk
   rasterizerCreateInfo.rasterizerDiscardEnable = VK_FALSE;
   rasterizerCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterizerCreateInfo.lineWidth = 1.0f;
-  rasterizerCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+  rasterizerCreateInfo.cullMode = VK_CULL_MODE_NONE;
   rasterizerCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizerCreateInfo.depthBiasEnable = VK_FALSE;
 
@@ -122,27 +107,39 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, Vk
 
   VkPipelineColorBlendAttachmentState colorBlendAttachment{};
   colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-  colorBlendAttachment.blendEnable = VK_FALSE;
+  colorBlendAttachment.blendEnable = VK_TRUE;
+  colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+  colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
   VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{};
   colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
   colorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+  colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;  // Optional
   colorBlendStateCreateInfo.attachmentCount = 1;
   colorBlendStateCreateInfo.pAttachments = &colorBlendAttachment;
+  colorBlendStateCreateInfo.blendConstants[0] = 0.0f;  // Optional
+  colorBlendStateCreateInfo.blendConstants[1] = 0.0f;  // Optional
+  colorBlendStateCreateInfo.blendConstants[2] = 0.0f;  // Optional
+  colorBlendStateCreateInfo.blendConstants[3] = 0.0f;  // Optional
 
   VkPushConstantRange pushConstantCreateInfo;
   pushConstantCreateInfo.offset = 0;
   pushConstantCreateInfo.size = sizeof(RendererPushConstants);
   pushConstantCreateInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
+  VkDescriptorSetLayout descriptorSetLayouts[] = {*m_VulkanDescriptorSetLayout};
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutCreateInfo.setLayoutCount = 1;
-  pipelineLayoutCreateInfo.pSetLayouts = &_vkDescriptorSetLayout;
+  pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts;
   pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
   pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantCreateInfo;
 
-  VkResult pipeLayoutCreateResult = vkCreatePipelineLayout(*_vulkanDevice, &pipelineLayoutCreateInfo, nullptr, &m_VkPipelineLayout);
+  VkResult pipeLayoutCreateResult = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, nullptr, &m_VkPipelineLayout);
   if (pipeLayoutCreateResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not create pipeline layout");
   }
@@ -169,21 +166,23 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice, Vk
   graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
   graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
   graphicsPipelineCreateInfo.layout = m_VkPipelineLayout;
-  graphicsPipelineCreateInfo.renderPass = _vulkanRenderPass;
+  graphicsPipelineCreateInfo.renderPass = *vulkanRenderPass;
   graphicsPipelineCreateInfo.subpass = 0;
   graphicsPipelineCreateInfo.pDepthStencilState = &depthStencil;
 
-  VkResult graphicsPipelineCreateResult = vkCreateGraphicsPipelines(*_vulkanDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_VkPipeline);
+  VkResult graphicsPipelineCreateResult = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_VkPipeline);
   if (graphicsPipelineCreateResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not create graphics pipeline");
   }
+
+  m_VkDescriptorSetLayouts.resize(VulkanContext::MAX_FRAMES_IN_FLIGHT, *m_VulkanDescriptorSetLayout);
 }
 
 VulkanGraphicPipeline::~VulkanGraphicPipeline() {
-  vkDestroyShaderModule(*m_VulkanDevice, m_VertexShaderModule, nullptr);
-  vkDestroyShaderModule(*m_VulkanDevice, m_FragmentShaderModule, nullptr);
-  vkDestroyPipelineLayout(*m_VulkanDevice, m_VkPipelineLayout, nullptr);
-  vkDestroyPipeline(*m_VulkanDevice, m_VkPipeline, nullptr);
+  const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
+
+  vkDestroyPipelineLayout(vkDevice, m_VkPipelineLayout, nullptr);
+  vkDestroyPipeline(vkDevice, m_VkPipeline, nullptr);
 }
 
 void VulkanGraphicPipeline::Bind(const VkCommandBuffer& _vkCommandBuffer) const {

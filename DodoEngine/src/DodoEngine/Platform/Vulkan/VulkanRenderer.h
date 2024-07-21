@@ -19,6 +19,8 @@ class Camera;
 class VulkanBuffer;
 class VulkanContext;
 class VulkanDescriptorSet;
+class VulkanDescriptorSetLayout;
+class VulkanGraphicPipeline;
 struct VulkanSwapChainData;
 struct VulkanRenderPassData;
 
@@ -78,8 +80,12 @@ class VulkanRenderer : public Renderer {
   uint32_t m_FrameCount{0};
   Ref<VulkanBuffer> m_UniformBuffer;
   UniformBufferObject m_UniformMvp;
-  Ref<VulkanDescriptorSet> m_VulkanDescriptorSet;
   RendererData m_RendererData;
+  Ref<VulkanGraphicPipeline> m_DefaultGraphicPipeline;
+  Ref<VulkanDescriptorSet> m_DefaultDescriptorSet;
+
+  Ref<VulkanGraphicPipeline> m_GridGraphicPipeline;
+  Ref<VulkanDescriptorSet> m_GridDescriptorSet;
 };
 
 DODO_END_NAMESPACE

@@ -5,12 +5,15 @@
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
+#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
+#include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
 #include <DodoEngine/Platform/Vulkan/VulkanTextureImage.h>
 #include <DodoEngine/Renderer/Mesh.h>
 #include <DodoEngine/Renderer/MeshTransform.h>
 #include <DodoEngine/Renderer/Model.h>
 #include <DodoEngine/Renderer/Quad.h>
 #include <DodoEngine/Renderer/RendererPushConstants.h>
+#include <DodoEngine/Renderer/ShaderManager.h>
 #include <DodoEngine/Renderer/Texture.h>
 #include <DodoEngine/Renderer/UniformBufferObject.h>
 
@@ -27,6 +30,37 @@ VulkanRenderer::VulkanRenderer(VulkanContext& _vulkanContext) : m_VulkanContext(
 void VulkanRenderer::Init(const Window& _window) {
   m_VulkanContext.Init(_window);
 
+  const VulkanSwapChainData& swapChainData = m_VulkanContext.GetSwapChain()->GetSpec();
+  const Ref<VulkanDevice>& vulkanDevice = m_VulkanContext.GetVulkanDevice();
+
+  // Creation of the default graphic pipeline
+  {
+    const std::vector<VulkanDescriptorSetLayoutSpec> defaultPipelineLayoutSpec = {
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT},
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 128, VK_SHADER_STAGE_FRAGMENT_BIT}};
+    Ref<VulkanDescriptorSetLayout> defaultDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(defaultPipelineLayoutSpec);
+
+    const VulkanGraphicPipelineSpecification pipelineSpec{.m_VulkanDescriptorSetLayout = defaultDescriptorSetLayout,
+                                                          .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/default.vert.spv"),
+                                                          .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/default.frag.spv")};
+
+    m_DefaultGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(pipelineSpec, swapChainData);
+    m_DefaultDescriptorSet = std::make_shared<VulkanDescriptorSet>(m_DefaultGraphicPipeline->GetDescriptorSetLayout(), *m_VulkanContext.GetDescriptorPool());
+  }
+
+  // Creation of the grid pipeline
+  {
+    const std::vector<VulkanDescriptorSetLayoutSpec> gridPipelineLayoutSpec = {
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT}};
+    Ref<VulkanDescriptorSetLayout> gridDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
+    const VulkanGraphicPipelineSpecification gridPipelineSpec{.m_VulkanDescriptorSetLayout = gridDescriptorSetLayout,
+                                                          .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/grid.vert.spv"),
+                                                          .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/grid.frag.spv")};
+
+    m_GridGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(gridPipelineSpec, swapChainData);
+    m_GridDescriptorSet = std::make_shared<VulkanDescriptorSet>(m_GridGraphicPipeline->GetDescriptorSetLayout(), *m_VulkanContext.GetDescriptorPool());
+  }
+
   // Uniform buffer
   m_UniformBuffer = std::make_shared<VulkanBuffer>(
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
@@ -36,45 +70,76 @@ void VulkanRenderer::Update(const Camera& _camera, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
   VulkanRenderPassData& renderPassData = m_RendererData.m_RenderPassData;
-  const Ref<VulkanDescriptorSet>& descriptorSet = renderPassData.m_DescriptorSet;
   const VkCommandBuffer& commandBuffer = renderPassData.m_CommandBuffer;
+  const uint32_t& frameIndex = renderPassData.m_FrameIndex;
 
   BatchMvpUbo(_camera, renderPassData.m_SwapChainData, _deltaTime);
-  descriptorSet->UpdateDescriptor(*m_UniformBuffer, m_RendererData.NeededTextures(), renderPassData.m_FrameIndex);
-  descriptorSet->Bind(renderPassData);
 
-  uint32_t modelId = 0;
+  // Grid pass
+  {
+    m_GridGraphicPipeline->Bind(commandBuffer);
+    m_GridDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer, frameIndex);
+    m_GridDescriptorSet->Bind(m_GridGraphicPipeline->GetPipelineLayout(), commandBuffer, frameIndex);
 
-  // Draw Meshes
-  for (const auto& [id, model] : m_RendererData.m_ModelsToDraw) {
-    std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes), [&](const Ref<Mesh>& _mesh) {
-      const Ref<Texture>& texture = _mesh->m_Texture;
-      const Ptr<VulkanTextureImage>& textureImage = texture->GetTextureImage();
+    const Ref<Model>& quadModel = m_RendererData.m_ModelsToDraw[0];
+
+    const VulkanBuffer& _vertexBuffer = *quadModel->m_Meshes[0]->m_VertexBuffer;
+    VkBuffer vertexBuffers[] = {_vertexBuffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+    uint32_t elementCount = _vertexBuffer.GetElementCount();
+
+    const VulkanBuffer& _indexBuffer = *quadModel->m_Meshes[0]->m_IndicesBuffer;
+    vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, _indexBuffer.GetElementCount(), 1, 0, 0, 0);
+  }
+
+  // Default shader pass
+  {
+    m_DefaultGraphicPipeline->Bind(commandBuffer);
+
+    m_DefaultDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer, frameIndex);
+    m_DefaultDescriptorSet->UpdateImageSamplers(m_RendererData.NeededTextures(), frameIndex);
+    m_DefaultDescriptorSet->Bind(m_DefaultGraphicPipeline->GetPipelineLayout(), commandBuffer, frameIndex);
+
+    uint32_t modelId = 0;
+
+    // Draw Meshes
+    for (const auto& [id, model] : m_RendererData.m_ModelsToDraw) {
       const uint32_t instanceCount = m_RendererData.m_ModelsTransform[id].size();
 
-      RendererPushConstants rendererPushConstants{.m_ModelId = modelId++, .m_TextureId = texture->GetId()};
-      vkCmdPushConstants(commandBuffer, renderPassData.m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RendererPushConstants), &rendererPushConstants);
+      std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes), [&](const Ref<Mesh>& _mesh) {
+        const Ref<Texture>& texture = _mesh->m_Texture;
+        const Ptr<VulkanTextureImage>& textureImage = texture->GetTextureImage();
 
-      const VulkanBuffer& _vertexBuffer = *_mesh->m_VertexBuffer;
-      VkBuffer vertexBuffers[] = {_vertexBuffer};
-      VkDeviceSize offsets[] = {0};
-      vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-      uint32_t elementCount = _vertexBuffer.GetElementCount();
+        RendererPushConstants rendererPushConstants{.m_ModelId = modelId, .m_TextureId = texture->GetId()};
+        vkCmdPushConstants(commandBuffer, renderPassData.m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RendererPushConstants),
+                           &rendererPushConstants);
 
-      if (_mesh->IsIndexed()) {
-        const VulkanBuffer& _indexBuffer = *_mesh->m_IndicesBuffer;
-        vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffer, _indexBuffer.GetElementCount(), instanceCount, 0, 0, 0);
-      } else {
-        vkCmdDraw(commandBuffer, elementCount, instanceCount, 0, 0);
-      }
-    });
+        const VulkanBuffer& _vertexBuffer = *_mesh->m_VertexBuffer;
+        VkBuffer vertexBuffers[] = {_vertexBuffer};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+        uint32_t elementCount = _vertexBuffer.GetElementCount();
+
+        if (_mesh->IsIndexed()) {
+          const VulkanBuffer& _indexBuffer = *_mesh->m_IndicesBuffer;
+          vkCmdBindIndexBuffer(commandBuffer, _indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+          vkCmdDrawIndexed(commandBuffer, _indexBuffer.GetElementCount(), instanceCount, 0, 0, 0);
+        } else {
+          vkCmdDraw(commandBuffer, elementCount, instanceCount, 0, 0);
+        }
+      });
+
+      modelId += instanceCount;
+    }
   }
 }
 
 void VulkanRenderer::Shutdown() {
   m_RendererData.Clear();
   m_UniformBuffer.reset();
+  ShaderManager::Shutdown();
   TextureManager::Shutdown();
   m_VulkanContext.Shutdown();
 }
@@ -84,12 +149,15 @@ void VulkanRenderer::BeginRenderPass() {
 
   m_RendererData.m_RenderPassData = {m_FrameCount++};
   m_VulkanContext.BeginRenderPass(m_RendererData.m_RenderPassData);
+  m_RendererData.m_RenderPassData.m_PipelineLayout = m_DefaultGraphicPipeline->GetPipelineLayout();
 }
 
 void VulkanRenderer::EndRenderPass() {
   DODO_TRACE(VulkanRenderer);
 
   m_VulkanContext.EndRenderPass(m_RendererData.m_RenderPassData);
+  m_GridDescriptorSet->Reset();
+  m_DefaultDescriptorSet->Reset();
   m_RendererData.ResetTransforms();
 }
 
@@ -99,8 +167,7 @@ void VulkanRenderer::RegisterModel(Ref<Model>& _model) {
   for (const auto& _mesh : _model->m_Meshes) {
     Ref<Texture> meshTexture = _mesh->m_Texture;
     const TextureId& textureId = meshTexture->GetId();
-    if (!m_RendererData.m_ModelsTexture.contains(textureId))
-    {
+    if (!m_RendererData.m_ModelsTexture.contains(textureId)) {
       m_RendererData.m_ModelsTexture[textureId] = meshTexture;
     }
   }

@@ -14,99 +14,162 @@
 
 DODO_BEGIN_NAMESPACE
 
-enum AttributeType { POSITION, NORMAL, TANGENT, TEXCOORD_n, COLOR_n, JOINTS_n, WEIGHTS_n };
+void GltfLoader::ProcessPrimitive(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<Vertex>& _vertices,
+                                  std::vector<uint32_t>& _indices, glm::mat4 _accTransform) {
+  std::vector<glm::vec3> vertices;
+  std::vector<glm::vec2> texCoords;
 
-enum PrimitiveMode { POINTS = 0, LINES = 1, LINE_LOOP = 2, LINE_STRIP = 3, TRIANGLES = 4, TRIANGLE_STRIP = 5, TRIANGLE_FAN = 6 };
+  ProcessIndices(_primitive, _model, _indices);
+  ProcessVertices(_primitive, _model, vertices, _accTransform);
+  ProcessTexCoords(_primitive, _model, texCoords);
 
-void GltfLoader::ProcessNode(const tinygltf::Node& _node, const tinygltf::Model& _model, std::vector<glm::vec3>& _vertices, std::vector<uint32_t>& _indices,
-                             std::vector<glm::vec2>& _texCoords, std::vector<std::string>& _textureFiles, uint32_t _indexOffset, glm::mat4 _accTransform) {
-
-  const tinygltf::Mesh& nodeMesh = _model.meshes[_node.mesh];
-  
-  for (const tinygltf::Primitive& primitive : nodeMesh.primitives)
+  if (vertices.size() != texCoords.size())
   {
-    const PrimitiveMode primitiveMode = static_cast<PrimitiveMode>(primitive.mode);
-    if (primitive.material >= 0) {
-      const tinygltf::Material& material = _model.materials[primitive.material];
-      const tinygltf::TextureInfo& textureInfo = material.pbrMetallicRoughness.baseColorTexture;
-      if (textureInfo.index >= 0) {
-        const tinygltf::Texture texture = _model.textures[textureInfo.index];
-        const tinygltf::Image& image = _model.images[texture.source];
-        _textureFiles.push_back(image.uri);
-      }
+    DODO_CRITICAL("An error has ocurred during the loading of the mesh : texcoords and vertices size are not equal");
+  }
+
+  const uint32_t verticesSize = vertices.size();
+  _vertices.resize(verticesSize);
+  for (uint32_t i = 0; i < verticesSize; ++i) {
+    _vertices[i]= {vertices[i], DEFAULT_COLOR, texCoords[i]};
+  }
+}
+
+void GltfLoader::ProcessTexCoords(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<glm::vec2>& _texCoords) {
+  std::vector<float> texCoords;
+  const tinygltf::Accessor& accessor = _model.accessors.at(GetAccessorByName(AttributeType::TEXCOORD_n, _primitive));
+  const AttributeSpec attributeSpec = GetDataByAccessor<float>(accessor, {AttributeType::TEXCOORD_n, AccessorType::VEC2}, _primitive, _model, texCoords);
+
+  // Tex Coords
+  for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
+    _texCoords.push_back({texCoords[i], texCoords[i + 1]});
+  }
+}
+
+void GltfLoader::ProcessVertices(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<glm::vec3>& _vertices,
+                                 glm::mat4& _accTransform) {
+  std::vector<float> vertices;
+  const tinygltf::Accessor& accessor = _model.accessors.at(GetAccessorByName(AttributeType::POSITION, _primitive));
+  const AttributeSpec attributeSpec = GetDataByAccessor<float>(accessor, {AttributeType::POSITION, AccessorType::VEC3}, _primitive, _model, vertices);
+
+  // Vertices
+  for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
+    glm::vec3 transformedVector = _accTransform * glm::vec4(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
+    _vertices.push_back(transformedVector);
+  }
+}
+
+void GltfLoader::ProcessIndices(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<uint32_t>& _indices) {
+  // Indices
+  /*const tinygltf::Accessor& accessor = _model.accessors[_primitive.indices];
+  if (accessor.componentType == 5125) {
+    std::vector<uint32_t> indices;
+    const AttributeSpec attributeSpec = GetDataByAccessor<uint32_t>(accessor, {AttributeType::POSITION, AccessorType::SCALAR}, _primitive, _model, indices);
+
+    for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
+      _indices.push_back(indices[i]);
     }
+  } else {
 
-    // Transformation
-    if (!_node.translation.empty()) {
-      const glm::vec3 localTranslation = glm::vec3(_node.translation[0], _node.translation[1], _node.translation[2]);
-      _accTransform = glm::translate(_accTransform, localTranslation);
+    std::vector<uint16_t> indices;
+    const AttributeSpec attributeSpec = GetDataByAccessor<uint16_t>(accessor, {AttributeType::POSITION, AccessorType::SCALAR}, _primitive, _model, indices);
+
+    for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
+      _indices.push_back(indices[i]);
     }
+  }*/
 
-    if (!_node.rotation.empty()) {
-      const glm::vec3 localRotation = glm::vec3(_node.rotation[0], _node.rotation[1], _node.rotation[2]);
-      _accTransform = glm::rotate(_accTransform, glm::radians(localRotation.x), glm::vec3(1, 0, 0));
-      _accTransform = glm::rotate(_accTransform, glm::radians(localRotation.y), glm::vec3(0, 1, 0));
-      _accTransform = glm::rotate(_accTransform, glm::radians(localRotation.z), glm::vec3(0, 0, 1));
+  // Indices
+  const tinygltf::Accessor indicesAccessor = _model.accessors[_primitive.indices];
+  const tinygltf::BufferView indicesBufferView = _model.bufferViews[indicesAccessor.bufferView];
+  const tinygltf::Buffer indicesBuffer = _model.buffers[indicesBufferView.buffer];
+
+  if (indicesAccessor.componentType == 5125) {
+    std::vector<uint32_t> tempIndices(indicesBufferView.byteLength / sizeof(uint32_t));
+    std::memcpy(tempIndices.data(), indicesBuffer.data.data() + indicesBufferView.byteOffset + indicesAccessor.byteOffset, indicesBufferView.byteLength);
+    const uint32_t increment = indicesBufferView.byteStride != 0 ? indicesBufferView.byteStride / sizeof(uint32_t) : 1;
+    const uint32_t iterSize = indicesBufferView.byteStride == 0 ? indicesAccessor.count : tempIndices.size();
+
+    for (uint64_t i = 0; i < iterSize; i += increment) {
+      _indices.push_back(tempIndices[i]);
     }
+  } else {
+    std::vector<uint16_t> tempIndices(indicesBufferView.byteLength / sizeof(uint16_t));
+    std::memcpy(tempIndices.data(), indicesBuffer.data.data() + indicesBufferView.byteOffset + indicesAccessor.byteOffset, indicesBufferView.byteLength);
+    const uint32_t increment = indicesBufferView.byteStride != 0 ? indicesBufferView.byteStride / sizeof(uint16_t) : 1;
+    const uint32_t iterSize = indicesBufferView.byteStride == 0 ? indicesAccessor.count : tempIndices.size();
 
-    if (!_node.scale.empty()) {
-      const glm::vec3 localScale = glm::vec3(_node.scale[0], _node.scale[1], _node.scale[2]);
-      _accTransform = glm::scale(_accTransform, localScale);
+    for (uint32_t i = 0; i < iterSize; i += increment) {
+      _indices.push_back(tempIndices[i]);
     }
+  }
+}
 
-    // Indices
-    const tinygltf::Accessor indicesAccessor = _model.accessors[primitive.indices];
-    const tinygltf::BufferView indicesBufferView = _model.bufferViews[indicesAccessor.bufferView];
-    const tinygltf::Buffer indicesBuffer = _model.buffers[indicesBufferView.buffer];
+void GltfLoader::ProcessTextureFiles(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<std::string>& _textureFiles) {
+  if (_primitive.material < 0) {
+    return;
+  }
 
-    const uint32_t indicesSize = _indices.size();
-    _indices.resize(indicesSize + indicesAccessor.count);
-    if (indicesAccessor.componentType == 5125) {
-      std::vector<uint32_t> tempIndices(indicesAccessor.count);
-      std::memcpy(tempIndices.data(), indicesBuffer.data.data() + indicesBufferView.byteOffset, indicesAccessor.count * sizeof(uint32_t));
-      for (const uint32_t& index : tempIndices) {
-        _indices.push_back(index + _indexOffset);
-      }
-    } else {
-      std::vector<uint16_t> tempIndices(indicesAccessor.count);
-      std::memcpy(tempIndices.data(), indicesBuffer.data.data() + indicesBufferView.byteOffset, indicesAccessor.count * sizeof(uint16_t));
-      for (const uint16_t& index : tempIndices) {
-        _indices.push_back(static_cast<uint32_t>(index + _indexOffset));
-      }
-    }
+  const tinygltf::Material& material = _model.materials[_primitive.material];
+  const tinygltf::TextureInfo& textureInfo = material.pbrMetallicRoughness.baseColorTexture;
 
-    // Vertices
-    const tinygltf::Accessor verticesAccessor = _model.accessors[primitive.attributes.at("POSITION")];
-    const tinygltf::BufferView verticesBufferView = _model.bufferViews[verticesAccessor.bufferView];
-    const tinygltf::Buffer verticesBuffer = _model.buffers[verticesBufferView.buffer];
-    std::vector<float> vertices(verticesAccessor.count * 3);
-    std::memcpy(vertices.data(), verticesBuffer.data.data() + verticesBufferView.byteOffset, verticesAccessor.count * 3 * sizeof(float));
+  if (textureInfo.index < 0) {
+    return;
+  }
 
-    // Texcoords
-    const tinygltf::Accessor texCoordsAccessor = _model.accessors[primitive.attributes.at("TEXCOORD_0")];
-    const tinygltf::BufferView texCoordsBufferView = _model.bufferViews[texCoordsAccessor.bufferView];
-    const tinygltf::Buffer texCoordsBuffer = _model.buffers[texCoordsBufferView.buffer];
+  const tinygltf::Texture texture = _model.textures[textureInfo.index];
+  const tinygltf::Image& image = _model.images[texture.source];
+  _textureFiles.push_back(image.uri);
+}
 
-    std::vector<float> texCoords(texCoordsAccessor.count * 2);
-    std::memcpy(texCoords.data(), texCoordsBuffer.data.data() + texCoordsBufferView.byteOffset, texCoordsAccessor.count * 2 * sizeof(float));
+void GltfLoader::ProcessNode(tinygltf::Model& model, const int& nodeIndex, const std::filesystem::path& modelPath, std::vector<dodo::Ref<dodo::Mesh>>& meshes, const glm::mat4& _accTransform) {
+  tinygltf::Node& node = model.nodes[nodeIndex];
+  tinygltf::Mesh& nodeMesh = model.meshes[node.mesh];
+  glm::mat4 accTransform = _accTransform;
 
-    for (uint32_t i = 0; i < vertices.size() - 2; i += 3) {
-      // glm::vec3 transformedVector = glm::vec3(vertices[i], vertices[i + 1], vertices[i + 3]) * localTranslation;
-      glm::vec3 transformedVector = _accTransform * glm::vec4(vertices[i], vertices[i + 1], vertices[i + 2], 1.0f);
-      _vertices.push_back(transformedVector);
-    }
+  // Transformation
+  if (!node.translation.empty()) {
+    const glm::vec3 localTranslation = glm::vec3(node.translation[0], node.translation[1], node.translation[2]);
+    accTransform = glm::translate(accTransform, localTranslation);
+  }
 
-    for (uint32_t i = 0; i < texCoords.size() - 1; i += 2) {
-      _texCoords.push_back({texCoords[i], texCoords[i + 1]});
-    }
+  if (!node.rotation.empty()) {
+    const glm::vec3 localRotation = glm::vec3(node.rotation[0], node.rotation[1], node.rotation[2]);
+    accTransform = glm::rotate(accTransform, glm::radians(localRotation.x), glm::vec3(1, 0, 0));
+    accTransform = glm::rotate(accTransform, glm::radians(localRotation.y), glm::vec3(0, 1, 0));
+    accTransform = glm::rotate(accTransform, glm::radians(localRotation.z), glm::vec3(0, 0, 1));
+  }
 
-    _indexOffset += vertices.size();
+  if (!node.scale.empty()) {
+    const glm::vec3 localScale = glm::vec3(node.scale[0], node.scale[1], node.scale[2]);
+    accTransform = glm::scale(accTransform, localScale);
+  }
+
+  for (const tinygltf::Primitive& primitive : nodeMesh.primitives) {
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    std::vector<std::string> textureFiles;
+
+    ProcessTextureFiles(primitive, model, textureFiles);
+    ProcessPrimitive(primitive, model, vertices, indices, accTransform);
+
+    const std::string textureFile = !textureFiles.empty() ? (modelPath.parent_path() / textureFiles.front()).string() : Texture::DEFAULT_TEXTURE_PATH;
+    meshes.push_back(Mesh::Create(vertices, indices, textureFile.c_str()));
   }
 
   // Children
-  for (const auto& nodeId : _node.children) {
-    ProcessNode(_model.nodes[nodeId], _model, _vertices, _indices, _texCoords, _textureFiles, _indexOffset, _accTransform);
+  for (const auto& childrenNodeId : node.children) {
+    ProcessNode(model, childrenNodeId, modelPath, meshes, accTransform);
   }
+}
+
+uint32_t GltfLoader::GetAccessorByName(AttributeType _accessorName, const tinygltf::Primitive& _primitive) {
+  const std::string accessorName = AttributeSpec::ToString(_accessorName);
+  if (!_primitive.attributes.contains(accessorName)) {
+    DODO_CRITICAL("Accessor name {} not found in the primitive", accessorName);
+  }
+
+  return _primitive.attributes.at(accessorName);
 }
 
 std::vector<Ref<Mesh>> GltfLoader::LoadFromFile(const char* _modelFileName) {
@@ -136,24 +199,7 @@ std::vector<Ref<Mesh>> GltfLoader::LoadFromFile(const char* _modelFileName) {
   const std::filesystem::path modelPath = _modelFileName;
 
   for (const int& nodeIndex : rootNodes) {
-    std::vector<uint32_t> indices;
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec2> texCoords;
-    std::vector<std::string> textureFiles;
-    ProcessNode(model.nodes[nodeIndex], model, vertices, indices, texCoords, textureFiles, vertices.size(), glm::mat4(1.0f));
-
-    std::vector<Vertex> finalVertices;
-    for (int i = 0; i < vertices.size(); ++i) {
-      finalVertices.push_back({vertices[i], DEFAULT_COLOR, texCoords[i]});
-    }
-
-    if (!textureFiles.empty()) {
-      const std::string& textureFilePath = (modelPath.parent_path() / textureFiles.front()).string();
-      meshes.push_back(Mesh::Create(finalVertices, indices, textureFilePath.c_str()));
-
-    } else {
-      meshes.push_back(Mesh::Create(finalVertices, indices, Texture::DEFAULT_TEXTURE_PATH));
-    }
+    ProcessNode(model, nodeIndex, modelPath, meshes, glm::mat4(1.0f));
   }
 
   return meshes;

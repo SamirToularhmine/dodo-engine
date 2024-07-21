@@ -13,6 +13,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
   if (action == GLFW_PRESS) {
     inputManager.SetKeyDown(dodoKey);
+    inputManager.SetKeyPress(dodoKey);
   }
 
   if (action == GLFW_RELEASE) {
@@ -51,10 +52,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
   if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
     if (action == GLFW_PRESS) {
       inputManager.SetMouseMiddleDown();
+      inputManager.SetMouseMiddlePressed();
     }
 
     if (action == GLFW_RELEASE) {
       inputManager.SetMouseMiddleUp();
+      inputManager.SetMouseMiddleReleased();
     }
   }
 }

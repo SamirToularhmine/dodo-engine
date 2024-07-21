@@ -65,11 +65,7 @@ void VulkanContext::Init(const Window& _window) {
   VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
 
   m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, swapChainData);
-  m_VulkanDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(m_VulkanDevice);
-  m_VkDescriptorSetLayouts.resize(MAX_FRAMES_IN_FLIGHT, *m_VulkanDescriptorSetLayout);
   m_VulkanDescriptorPool = std::make_shared<VulkanDescriptorPool>(MAX_FRAMES_IN_FLIGHT, m_VulkanDevice);
-  m_VulkanDescriptorSet = std::make_shared<VulkanDescriptorSet>(*m_VulkanDescriptorPool, m_VulkanDevice, m_VkDescriptorSetLayouts.data());
-  m_VulkanGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(m_VulkanDevice, *m_VulkanDescriptorSetLayout, swapChainData, *m_VulkanRenderPass);
 
   m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
 
@@ -133,7 +129,7 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
     DestroyFrameBuffers();
     m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
     m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
-    m_VulkanGraphicPipeline->SetViewPort(m_VulkanSwapChain->GetSpec());
+    // m_VulkanGraphicPipeline->SetViewPort(m_VulkanSwapChain->GetSpec());
     return;
   }
 
@@ -154,12 +150,9 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
   _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
   _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
   _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
-  _vulkanRenderPassData.m_PipelineLayout = m_VulkanGraphicPipeline->GetPipelineLayout();
-  _vulkanRenderPassData.m_DescriptorSet = m_VulkanDescriptorSet;
   _vulkanRenderPassData.m_FrameIndex = currentFrameIndex;
 
   m_VulkanRenderPass->Begin(_vulkanRenderPassData);
-  m_VulkanGraphicPipeline->Bind(chosenCommandBuffer);
 }
 
 void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const {

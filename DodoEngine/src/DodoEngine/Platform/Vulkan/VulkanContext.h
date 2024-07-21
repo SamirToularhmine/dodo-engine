@@ -81,10 +81,7 @@ class VulkanContext : public GraphicContext {
   Ref<VulkanDevice> m_VulkanDevice;
   Ref<VulkanSwapChain> m_VulkanSwapChain;
   Ref<VulkanRenderPass> m_VulkanRenderPass;
-  Ref<VulkanGraphicPipeline> m_VulkanGraphicPipeline;
   Ref<VulkanDescriptorPool> m_VulkanDescriptorPool;
-  Ref<VulkanDescriptorSet> m_VulkanDescriptorSet;
-  Ref<VulkanDescriptorSetLayout> m_VulkanDescriptorSetLayout;
 
   VmaAllocator m_VmaAllocator;
 
@@ -95,7 +92,6 @@ class VulkanContext : public GraphicContext {
   std::vector<VkSemaphore> m_VkImagesAvailable;
   std::vector<VkSemaphore> m_VkRenderFinishedSemaphores;
   std::vector<VkFence> m_VkInFlightFences;
-  std::vector<VkDescriptorSetLayout> m_VkDescriptorSetLayouts;
 };
 
 DODO_END_NAMESPACE

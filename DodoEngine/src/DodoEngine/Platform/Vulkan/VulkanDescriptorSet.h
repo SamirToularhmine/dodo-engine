@@ -14,19 +14,30 @@ class VulkanBuffer;
 struct VulkanRenderPassData;
 class Texture;
 
-class VulkanDescriptorSet
-{
-public:
-	VulkanDescriptorSet(VulkanDescriptorPool& _vulkanDescriptionPool, const Ref<VulkanDevice>& _vulkanDevice, VkDescriptorSetLayout _vulkanDescriptorSetLayouts[]);
+struct DescriptorUpdate {
+  std::vector<VkDescriptorImageInfo> m_DescriptorImageInfo;
+  std::vector<VkDescriptorBufferInfo> m_DescriptorBufferInfo;
+  VkDescriptorType m_Type;
+  uint32_t m_Count;
+};
 
-	~VulkanDescriptorSet();
+class VulkanDescriptorSet {
+ public:
+  VulkanDescriptorSet(const std::vector<VkDescriptorSetLayout>& _vulkanDescriptorSetLayouts, VulkanDescriptorPool& _vulkanDescriptionPool);
 
-	void UpdateDescriptor(const VulkanBuffer& _buffer, const std::vector<Ref<Texture>>& _textures, const uint32_t& _frameIndex);
-	void Bind(const VulkanRenderPassData& _vulkanRenderPassData) const;
+  ~VulkanDescriptorSet();
 
-private:
-	std::vector<VkDescriptorSet> m_VkDescriptorSets;
-	Ref<VulkanDevice> m_VulkanDevice;
+  void UpdateUniformDescriptor(const VulkanBuffer& _buffer, const uint32_t& _frameIndex);
+
+  void UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures, const uint32_t& _frameIndex);
+
+  void Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer _vkCommandBuffer, const uint32_t& _frameIndex);
+
+  void Reset();
+
+ private:
+  std::vector<VkDescriptorSet> m_VkDescriptorSets;
+  std::vector<DescriptorUpdate> m_DecriptorUpdates;
 };
 
 DODO_END_NAMESPACE

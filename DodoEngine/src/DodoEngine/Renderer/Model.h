@@ -19,6 +19,8 @@ struct ModelIdProvider {
 struct Model {
   ModelId m_Id;
   std::vector<Ref<Mesh>> m_Meshes;
+
+  Model(const std::vector<Ref<Mesh>>& _meshes) : m_Id(ModelIdProvider::GetId()), m_Meshes(_meshes) {}
 };
 
 DODO_END_NAMESPACE

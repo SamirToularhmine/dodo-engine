@@ -6,7 +6,6 @@
 
 #include <volk.h>
 
-
 DODO_BEGIN_NAMESPACE
 
 class VulkanDevice;
@@ -14,31 +13,36 @@ class VulkanDescriptorSetLayout;
 struct VulkanSwapChainData;
 class VulkanRenderPass;
 
-class VulkanGraphicPipeline
-{
-public:
-    VulkanGraphicPipeline(Ref<VulkanDevice> _vulkanDevice,
-                          VkDescriptorSetLayout& _vkDescriptorSetLayout,
-                          const VulkanSwapChainData& _swapChainData,
-                          const VulkanRenderPass& _vulkanRenderPass);
-    ~VulkanGraphicPipeline();
+struct VulkanGraphicPipelineSpecification {
+  Ref<VulkanDescriptorSetLayout>& m_VulkanDescriptorSetLayout;
+  VkShaderModule m_VertexShaderModule;
+  VkShaderModule m_FragmentShaderModule;
+};
 
-    const VkViewport& GetViewPort() const { return m_Viewport; }
-    const VkRect2D& GetScissor() const { return m_Scissor; }
-    VkPipelineLayout GetPipelineLayout() const { return m_VkPipelineLayout; }
+class VulkanGraphicPipeline {
+ public:
+  VulkanGraphicPipeline(const VulkanGraphicPipelineSpecification& _vulkanPipelineSpec, const VulkanSwapChainData& _swapChainData);
+  ~VulkanGraphicPipeline();
 
-	void Bind(const VkCommandBuffer& _vkCommandBuffer) const;
+  const VkViewport& GetViewPort() const { return m_Viewport; }
+  const VkRect2D& GetScissor() const { return m_Scissor; }
+  VkPipelineLayout GetPipelineLayout() const { return m_VkPipelineLayout; }
+  const std::vector<VkDescriptorSetLayout>& GetDescriptorSetLayout() const { return m_VkDescriptorSetLayouts; }
 
-    operator const VkPipeline& () const { return m_VkPipeline; }
-    void SetViewPort(const VulkanSwapChainData& swapChainSpec);
-private:
-    VkPipeline m_VkPipeline;
-    VkPipelineLayout m_VkPipelineLayout;
-    VkViewport m_Viewport;
-    VkRect2D m_Scissor;
-    Ref<VulkanDevice> m_VulkanDevice;
-    VkShaderModule m_VertexShaderModule;
-    VkShaderModule m_FragmentShaderModule;
+  void Bind(const VkCommandBuffer& _vkCommandBuffer) const;
+
+  operator const VkPipeline&() const { return m_VkPipeline; }
+  void SetViewPort(const VulkanSwapChainData& swapChainSpec);
+
+ private:
+  VkPipeline m_VkPipeline;
+  VkPipelineLayout m_VkPipelineLayout;
+  Ref<VulkanDescriptorSetLayout> m_VulkanDescriptorSetLayout;
+  VkViewport m_Viewport;
+  VkRect2D m_Scissor;
+  VkShaderModule m_VertexShaderModule;
+  VkShaderModule m_FragmentShaderModule;
+  std::vector<VkDescriptorSetLayout> m_VkDescriptorSetLayouts;
 };
 
 DODO_END_NAMESPACE

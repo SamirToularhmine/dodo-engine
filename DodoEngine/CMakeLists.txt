@@ -86,10 +86,10 @@ set(IMGUI_SOURCE_LIST
 )
 
 set(INCLUDE_LIST "src" "vendor" "/usr/local/include" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
-file(GLOB_RECURSE SOURCE_LIST *.cpp *.c)
+file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST} "src/DodoEngine/Renderer/GltfLoader.h" "src/DodoEngine/Renderer/GltfLoader.cpp" "src/DodoEngine/Renderer/Model.h" "src/DodoEngine/Renderer/TextureManager.h" "src/DodoEngine/Renderer/TextureManager.cpp")
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST} "src/DodoEngine/Renderer/ShaderManager.h" "src/DodoEngine/Renderer/ShaderManager.cpp")
 target_link_libraries(DodoEngine glfw volk glm VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})

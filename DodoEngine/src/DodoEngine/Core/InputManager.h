@@ -11,10 +11,13 @@ enum Key;
 class InputManager {
  public:
   bool IsKeyDown(Key _key) const;
+  bool IsKeyPressed(Key _key) const;
 
   bool IsMousePrimaryDown() const;
   bool IsMouseSecondaryDown() const;
   bool IsMiddleMouseDown() const;
+  bool IsMiddleMousePressed() const;
+  bool IsMiddleMouseReleased() const;
 
   double GetMousePosX() const;
   double GetMousePosY() const;
@@ -26,6 +29,7 @@ class InputManager {
   double GetScrollDeltaY() const;
 
   void SetKeyDown(Key _key);
+  void SetKeyPress(Key _key);
   void SetKeyUp(Key _key);
 
   void SetMousePrimaryDown();
@@ -38,9 +42,11 @@ class InputManager {
   void SetScrollDelta(double _scrollDeltaX, double _scrollDeltaY);
 
   void SetMouseMiddleDown();
+  void SetMouseMiddlePressed();
   void SetMouseMiddleUp();
+  void SetMouseMiddleReleased();
 
-  void ResetMouseDelta();
+  void Reset();
 
   static InputManager& Get() {
     static InputManager instance;
@@ -49,10 +55,13 @@ class InputManager {
 
  private:
   std::unordered_map<Key, bool> m_KeysDown;
+  std::unordered_map<Key, bool> m_KeysPressed;
 
   bool m_MousePrimaryDown;
   bool m_MouseSecondaryDown;
   bool m_MouseMiddleDown;
+  bool m_MouseMiddlePressed;
+  bool m_MouseMiddleReleased;
 
   double m_MousePosX;
   double m_MousePosY;

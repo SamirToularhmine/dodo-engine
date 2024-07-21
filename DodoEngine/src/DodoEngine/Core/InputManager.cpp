@@ -9,8 +9,16 @@ bool InputManager::IsKeyDown(Key _key) const {
   return m_KeysDown.contains(_key);
 }
 
+bool InputManager::IsKeyPressed(Key _key) const {
+  return m_KeysPressed.contains(_key);
+}
+
 void InputManager::SetKeyDown(Key _key) {
   m_KeysDown[_key] = true;
+}
+
+void InputManager::SetKeyPress(Key _key) {
+  m_KeysPressed[_key] = true;
 }
 
 void InputManager::SetKeyUp(Key _key) {
@@ -27,6 +35,14 @@ bool InputManager::IsMouseSecondaryDown() const {
 
 bool InputManager::IsMiddleMouseDown() const {
   return m_MouseMiddleDown;
+}
+
+bool InputManager::IsMiddleMousePressed() const {
+  return m_MouseMiddlePressed;
+}
+
+bool InputManager::IsMiddleMouseReleased() const {
+  return m_MouseMiddleReleased;
 }
 
 void InputManager::SetMousePrimaryDown() {
@@ -62,15 +78,26 @@ void InputManager::SetMouseMiddleDown() {
   m_MouseMiddleDown = true;
 }
 
+void InputManager::SetMouseMiddlePressed() {
+  m_MouseMiddlePressed = true;
+}
+
 void InputManager::SetMouseMiddleUp() {
   m_MouseMiddleDown = false;
 }
 
-void InputManager::ResetMouseDelta() {
+void InputManager::SetMouseMiddleReleased() {
+  m_MouseMiddleReleased = true;
+}
+
+void InputManager::Reset() {
   m_MouseDeltaX = 0;
   m_MouseDeltaY = 0;
   m_ScrollDeltaX = 0;
   m_ScrollDeltaY = 0;
+  m_KeysPressed.clear();
+  m_MouseMiddlePressed = false;
+  m_MouseMiddleReleased = false;
 }
 
 double InputManager::GetMousePosX() const {

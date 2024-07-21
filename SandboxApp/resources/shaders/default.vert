@@ -23,7 +23,7 @@ layout(location = 1) out vec2 fragTexCoords;
 layout(location = 2) out int fragTextureId;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model[gl_InstanceIndex] * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model[gl_InstanceIndex + PushConstants.modelId] * vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoords = inTexCoords;
     fragTextureId = PushConstants.textureId;
