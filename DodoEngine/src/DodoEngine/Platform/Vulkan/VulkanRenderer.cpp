@@ -66,13 +66,14 @@ void VulkanRenderer::Init(const Window& _window) {
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
 }
 
-void VulkanRenderer::Update(const Camera& _camera, float _deltaTime) {
+void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
   VulkanRenderPassData& renderPassData = m_RendererData.m_RenderPassData;
   const VkCommandBuffer& commandBuffer = renderPassData.m_CommandBuffer;
   const uint32_t& frameIndex = renderPassData.m_FrameIndex;
 
+  m_UniformMvp.m_LightPos = _light.m_Position;
   BatchMvpUbo(_camera, renderPassData.m_SwapChainData, _deltaTime);
 
   // Grid pass

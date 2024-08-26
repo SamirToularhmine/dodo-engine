@@ -6,7 +6,6 @@
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 #include <DodoEngine/Platform/Vulkan/VulkanTextureImage.h>
 #include <DodoEngine/Renderer/Texture.h>
-#include <DodoEngine/Renderer/UniformBufferObject.h>
 #include <DodoEngine/Utils/Log.h>
 
 #include <array>

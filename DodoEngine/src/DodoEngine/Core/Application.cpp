@@ -56,6 +56,8 @@ void Application::Run() {
     // Ref<Model> avocado = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/avocado/Avocado.gltf"));
     // Ref<Model> sponza = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sponza/Sponza.gltf"));
 
+    Light pointLight {{-2, 2, -1}};
+
     while (!m_Window->ShouldClose()) {
       DODO_TRACE(Application);
 
@@ -65,10 +67,8 @@ void Application::Run() {
       float deltaTime = time - m_LastFrameTime;
       m_LastFrameTime = time;
 
-      for (int i = 0; i < 8; ++i)
-        for (int j = 0; j < 8; ++j)
-          for (int k = 0; k < 8; k++)
-            m_Renderer->DrawCube({{2 * i, 2 * j, 2 * k}, {rotateDegree, rotateDegree, rotateDegree}, {0.1, 0.1, 0.1}});
+      m_Renderer->DrawCube({{0, 2, 0}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
+      m_Renderer->DrawCube({{-2, 2, -1}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
 
       PerformanceManager::StoreFrameTime(deltaTime);
 
@@ -78,7 +78,7 @@ void Application::Run() {
       m_Camera->Update(deltaTime);
       m_Renderer->BeginRenderPass();
 
-      m_Renderer->Update(*m_Camera, deltaTime);
+      m_Renderer->Update(*m_Camera, pointLight, deltaTime);
       m_ImGuiLayer->Update(m_Renderer->GetFrameIndex());
 
       m_Renderer->EndRenderPass();

@@ -48,6 +48,10 @@ struct RendererData {
   }
 };
 
+struct Light {
+  glm::vec3 m_Position;
+};
+
 class VulkanRenderer : public Renderer {
  public:
   VulkanRenderer(VulkanContext& _vulkanContext);
@@ -55,7 +59,7 @@ class VulkanRenderer : public Renderer {
   ~VulkanRenderer() override = default;
 
   void Init(const Window& _window) override;
-  void Update(const Camera& _camera, float _deltaTime) override;
+  void Update(const Camera& _camera, const Light& _light, float _deltaTime) override;
   void Shutdown() override;
 
   void BeginRenderPass() override;

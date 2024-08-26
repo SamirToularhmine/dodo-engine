@@ -37,22 +37,13 @@ class Camera {
   static CameraPerformanceStats GetPerformanceStats() { return s_CameraPerformanceStats; };
 
  private:
-  static constexpr double MOUSE_SENSITIVITY = 10.0;
-
-  float m_StartMousePosX;
-  float m_StartMousePosY;
-  float m_StartMousePosZ;
-
-  float m_Angle;
-  glm::vec3 m_RotationalAxis;
-
-  float m_CosValue2;
-  glm::vec3 m_RotationalAxis2;
-
-  Quaternion m_LastQuaternion{0.0f, glm::vec3(1.0f, 0.0f, 0.0f)};
-  Quaternion m_CurrentQuaternion;
+  static constexpr double MOUSE_SENSITIVITY = 100.0;
 
   glm::vec3 m_Position;
+
+  float m_Pitch{0.0f};
+  float m_Yaw{0.0f};
+  float m_Roll{0.0f};
 };
 
 DODO_END_NAMESPACE

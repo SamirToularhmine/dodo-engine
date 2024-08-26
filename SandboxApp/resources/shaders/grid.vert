@@ -1,11 +1,13 @@
 #version 450
 
-layout (constant_id = 0) const int MAX_MODEL_COUNT = 1022;
+// To fix
+layout (constant_id = 0) const int MAX_MODEL_COUNT = 1021;
 
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model[MAX_MODEL_COUNT];
     mat4 view;
     mat4 proj;
+    vec3 lightPos;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;

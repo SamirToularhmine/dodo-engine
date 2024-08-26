@@ -5,18 +5,19 @@
 DODO_BEGIN_NAMESPACE
 
 class Camera;
+struct Light;
 struct Model;
 struct MeshTransform;
 class Window;
 
 class Renderer {
  public:
-  static constexpr uint32_t MAX_MODEL_COUNT = 1'022;
+  static constexpr uint32_t MAX_MODEL_COUNT = 1'021;
 
  public:
   virtual void Init(const Window& _window) = 0;
 
-  virtual void Update(const Camera& _camera, float _deltaTime) = 0;
+  virtual void Update(const Camera& _camera, const Light& _light, float _deltaTime) = 0;
 
   virtual void Shutdown() = 0;
 
