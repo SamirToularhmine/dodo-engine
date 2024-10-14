@@ -2,6 +2,7 @@
 
 #include <DodoEngine/Core/Window.h>
 #include <DodoEngine/Debug/PerformanceManager.h>
+#include <DodoEngine/Editor/Editor.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
@@ -41,6 +42,8 @@ void ImGuiLayer::Init(const Window& _window) const {
   ImGui_ImplVulkan_Init(&vulkanInitInfo);
 
   ImGui_ImplVulkan_CreateFontsTexture();
+
+  editor::InitScenePanel();
 }
 
 void ImGuiLayer::Update(const uint32_t& _frameIndex) const {
@@ -49,21 +52,13 @@ void ImGuiLayer::Update(const uint32_t& _frameIndex) const {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 
-  bool performanceStatsOpened = true;
-  ImGuiWindowFlags performanceStatsWindowFlags = 0;
-
-  // Performance stats window
+  // Show editor
   {
-    ImGui::SetNextWindowPos({0, 0});
-    ImGui::Begin("Dodo Engine Performance stats", &performanceStatsOpened, performanceStatsWindowFlags);
-    ImGui::Text("Frame time: %f ms", PerformanceManager::GetFrameTime());
-    for (const auto& [_name, _time] : PerformanceManager::GetTraces()) {
-      ImGui::Text("%s: %f ms", _name.c_str(), _time);
-    }
-    ImGui::End();
+    editor::ShowProfilerPanel();
+    editor::ShowScenePanel();
   }
 
-  ImGui::ShowDemoWindow();  // Show demo window! :)
+  ImGui::ShowDemoWindow();  
 
   ImGui::Render();
   ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vulkanContext.GetCommandBuffer(_frameIndex));

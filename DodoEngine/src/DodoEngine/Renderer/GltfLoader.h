@@ -60,9 +60,9 @@ class GltfLoader {
   static std::vector<Ref<Mesh>> LoadFromFile(const char* _modelFileName);
 
  private:
-  static constexpr glm::vec4 DEFAULT_COLOR = {1.0f, 0.0f, 0.0f, 1.0f};
+  static constexpr glm::vec4 DEFAULT_COLOR = {0.0f, 0.0f, 1.0f, 1.0f};
 
-  static void ProcessNode(tinygltf::Model& model, const int& nodeIndex, const std::filesystem::path& modelPath, std::vector<dodo::Ref<dodo::Mesh>>& meshes,
+  static void ProcessMeshNode(tinygltf::Model& model, const int& nodeIndex, const std::filesystem::path& modelPath, std::vector<dodo::Ref<dodo::Mesh>>& meshes,
                           const glm::mat4& _accTransform);
 
   static void ProcessPrimitive(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<Vertex>& _vertices,
@@ -76,6 +76,8 @@ class GltfLoader {
                               glm::mat4& _accTransform);
 
   static void ProcessTexCoords(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<glm::vec2>& _texCoords);
+
+  static void ProcessNormals(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<glm::vec3>& _normals);
 
   template <typename T>
   static AttributeSpec GetDataByAccessor(const tinygltf::Accessor& _accessor, AttributeSpec _attributeSpec, const tinygltf::Primitive& _primitive,

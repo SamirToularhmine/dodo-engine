@@ -29,11 +29,11 @@ Ptr<Texture> Texture::LoadFromFile(const char* _fileName) {
   }
 
   uint32_t imageSize = texWidth * texHeight * 4;
-  Ptr<VulkanTextureImage> vulkanTextureImage = std::make_unique<VulkanTextureImage>(pixels, imageSize, texWidth, texHeight);
+  Ptr<VulkanTextureImage> vulkanTextureImage = VulkanTextureImage::CreateFromImageData(pixels, imageSize, texWidth, texHeight);
 
   stbi_image_free(pixels);
 
-  return std::move(std::make_unique<Texture>(vulkanTextureImage, texWidth, texHeight, texChannels, _fileName));
+  return std::make_unique<Texture>(vulkanTextureImage, texWidth, texHeight, texChannels, _fileName);
 }
 
 DODO_END_NAMESPACE

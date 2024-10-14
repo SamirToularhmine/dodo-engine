@@ -45,7 +45,7 @@ VulkanBuffer::~VulkanBuffer() {
 }
 
 void VulkanBuffer::CopyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size) {
-  VulkanContext vulkanContext = VulkanContext::Get();
+  VulkanContext& vulkanContext = VulkanContext::Get();
   VulkanCommandBuffer commandBuffer;
   commandBuffer.BeginRecording();
 

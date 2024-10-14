@@ -4,15 +4,23 @@
 
 #include <volk.h>
 
+#include <vector>
+
 DODO_BEGIN_NAMESPACE
 
 class VulkanDevice;
 struct VulkanSwapChainData;
 struct VulkanRenderPassData;
 
+struct VulkanRenderPassAttachments {
+  std::vector<VkAttachmentDescription> m_AttachmentsDescription;
+  std::vector<VkAttachmentReference> m_AttachmentsReference;
+};
+
 class VulkanRenderPass {
+
  public:
-  VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanSwapChainData& _swapChainData);
+  VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments);
   ~VulkanRenderPass();
 
   void Begin(const VulkanRenderPassData& _vulkanRenderPassData) const;

@@ -98,6 +98,10 @@ void VulkanDescriptorSet::Bind(const VkPipelineLayout& _vkPipelineLayout, const 
                           &m_VkDescriptorSets[_frameIndex], 0, nullptr);
 }
 
+VkDescriptorSet const& VulkanDescriptorSet::GetCurrentDescriptorSet() const {
+  return m_VkDescriptorSets[0];
+}
+
 void VulkanDescriptorSet::Reset() {
   m_DecriptorUpdates.clear();
 }

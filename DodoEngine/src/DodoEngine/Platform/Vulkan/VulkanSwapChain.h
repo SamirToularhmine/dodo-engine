@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
+#include <DodoEngine/Renderer/Texture.h>
 
 #include <volk.h>
 #include <GLFW/glfw3.h>

@@ -13,6 +13,9 @@
 
 #include <functional>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 DODO_BEGIN_NAMESPACE
 
 Ptr<Application> Application::Create() {
@@ -34,9 +37,13 @@ void Application::Init(const WindowProps& _windowProps) {
   m_ImGuiLayer->Init(*m_Window);
 }
 
+static float easeInOutSine(float x) {
+  return -(cos(M_PI * x) - 1) / 2;
+}
+
 void Application::Run() {
   {
-    float rotateDegree = 0;
+    float rotateDegree = 1;
     // Quad Vertex buffer
     std::vector<Ref<Mesh>> quadMeshes = {Mesh::Create(QUAD_VERTICES, QUAD_INDICES)};
     Ref<Model> quadModel = std::make_shared<Model>(quadMeshes);
@@ -53,10 +60,11 @@ void Application::Run() {
     // Ref<Model> animatedCube = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/animated-cube/AnimatedCube.gltf"));
     // Ref<Model> chessGame = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/beautiful-game/ABeautifulGame.gltf"));
     // Ref<Model> tree = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/tree/tree.gltf"));
-    // Ref<Model> avocado = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/avocado/Avocado.gltf"));
+    // Ref<Model> avocado = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/avocado/Avocado.gltf"));
     // Ref<Model> sponza = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sponza/Sponza.gltf"));
-
-    Light pointLight {{-2, 2, -1}};
+    Ref<Model> sphere = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sphere/sphere.gltf"));
+    const float movingSpeed = 0.1f;
+    bool reverse = false;
 
     while (!m_Window->ShouldClose()) {
       DODO_TRACE(Application);
@@ -67,21 +75,47 @@ void Application::Run() {
       float deltaTime = time - m_LastFrameTime;
       m_LastFrameTime = time;
 
-      m_Renderer->DrawCube({{0, 2, 0}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
-      m_Renderer->DrawCube({{-2, 2, -1}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
+      for (int i = 0; i < 10; ++i) {
+        m_Renderer->DrawModel(sphere, {{i, 1, 1}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
+        m_Renderer->DrawModel(sphere, {{i, 1, -2}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
+      }
+      
+      const float pos = easeInOutSine(rotateDegree / 500) * 10.0f;
+      const glm::vec3 lightPos = {pos, 2, 5.0f};
+      m_Renderer->DrawCube({lightPos, {0, 0, 0}, {0.25f, 0.25f, 0.25f}});
 
       PerformanceManager::StoreFrameTime(deltaTime);
 
-      rotateDegree++;
-      rotateDegree = (int)rotateDegree % 360;
+      if (rotateDegree == 0) {
+        reverse = false;
+      }
+
+      if (rotateDegree == 500) {
+        reverse = true;
+      }
+
+      if (reverse) {
+        rotateDegree--;
+      } else {
+        rotateDegree++;
+      }
 
       m_Camera->Update(deltaTime);
-      m_Renderer->BeginRenderPass();
 
-      m_Renderer->Update(*m_Camera, pointLight, deltaTime);
-      m_ImGuiLayer->Update(m_Renderer->GetFrameIndex());
+      // Main pass
+      {
+          m_Renderer->BeginRenderPass();
+          m_Renderer->Update(*m_Camera, Light{lightPos}, deltaTime);
+          m_Renderer->EndRenderPass();
+      }
 
-      m_Renderer->EndRenderPass();
+      // UI pass
+      {
+          m_Renderer->BeginUIRenderPass();
+          m_ImGuiLayer->Update(m_Renderer->GetFrameIndex());
+          m_Renderer->EndUIRenderPass();
+      }
+
 
       m_Camera->Reset();
       m_Window->SwapBuffers();

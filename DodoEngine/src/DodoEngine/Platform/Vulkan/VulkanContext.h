@@ -1,5 +1,6 @@
 #pragma once
 
+#include <DodoEngine/Platform/Vulkan/VulkanDepthImage.h>
 #include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
@@ -52,9 +53,12 @@ class VulkanContext : public GraphicContext {
 
   void Shutdown() override;
 
-  void BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
 
-  void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const;
+  void BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
+  void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
+
+  void BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
+  void EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
 
   const Ref<VulkanDevice>& GetVulkanDevice() const { return m_VulkanDevice; }
   const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_VulkanPhysicalDevice; }
@@ -65,13 +69,18 @@ class VulkanContext : public GraphicContext {
   const Ref<VulkanDescriptorPool> GetDescriptorPool() const { return m_VulkanDescriptorPool; }
   const VkCommandBuffer& GetCommandBuffer(uint32_t _frameIndex) const { return m_VkCommandBuffers[_frameIndex]; }
   const Ref<VulkanRenderPass>& GetRenderPass() const { return m_VulkanRenderPass; }
-
+  const VulkanTextureImage& GetOffScreenTextureImage() const { return *m_OffScreenTextureImage; }
+  
   static VulkanContext& Get() {
     static VulkanContext instance;
     return instance;
   }
 
  private:
+  void BeginCommandBuffer(VulkanRenderPassData& _vulkanRenderPassData);
+  void EndCommandBuffer(uint32_t _frameIndex);
+  void SubmitQueue(uint32_t _frameIndex) const;
+  void PresentQueue(const VulkanRenderPassData& _vulkanRenderPassData);
   void DestroyFrameBuffers();
 
  private:
@@ -92,6 +101,12 @@ class VulkanContext : public GraphicContext {
   std::vector<VkSemaphore> m_VkImagesAvailable;
   std::vector<VkSemaphore> m_VkRenderFinishedSemaphores;
   std::vector<VkFence> m_VkInFlightFences;
+
+
+  Ptr<VulkanFrameBuffer> m_OffScreenFrameBuffer;
+  Ptr<VulkanDepthImage> m_DepthImage;
+  Ptr<VulkanTextureImage> m_OffScreenTextureImage;
+  Ref<VulkanRenderPass> m_OffScreenRenderPass;
 };
 
 DODO_END_NAMESPACE

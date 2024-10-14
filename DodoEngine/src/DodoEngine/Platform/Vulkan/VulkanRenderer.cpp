@@ -51,7 +51,8 @@ void VulkanRenderer::Init(const Window& _window) {
   // Creation of the grid pipeline
   {
     const std::vector<VulkanDescriptorSetLayoutSpec> gridPipelineLayoutSpec = {
-        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT}};
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT}
+    };
     Ref<VulkanDescriptorSetLayout> gridDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
     const VulkanGraphicPipelineSpecification gridPipelineSpec{.m_VulkanDescriptorSetLayout = gridDescriptorSetLayout,
                                                           .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/grid.vert.spv"),
@@ -155,11 +156,24 @@ void VulkanRenderer::BeginRenderPass() {
 
 void VulkanRenderer::EndRenderPass() {
   DODO_TRACE(VulkanRenderer);
-
+  
   m_VulkanContext.EndRenderPass(m_RendererData.m_RenderPassData);
+
   m_GridDescriptorSet->Reset();
   m_DefaultDescriptorSet->Reset();
   m_RendererData.ResetTransforms();
+}
+
+void VulkanRenderer::BeginUIRenderPass() {
+  DODO_TRACE(VulkanRenderer);
+  
+  m_VulkanContext.BeginUIRenderPass(m_RendererData.m_RenderPassData);
+}
+
+void VulkanRenderer::EndUIRenderPass() {
+  DODO_TRACE(VulkanRenderer);
+
+  m_VulkanContext.EndUIRenderPass(m_RendererData.m_RenderPassData);
 }
 
 void VulkanRenderer::RegisterModel(Ref<Model>& _model) {

@@ -33,6 +33,8 @@ class VulkanDescriptorSet {
 
   void Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer _vkCommandBuffer, const uint32_t& _frameIndex);
 
+  const VkDescriptorSet& GetCurrentDescriptorSet() const;
+
   void Reset();
 
  private:

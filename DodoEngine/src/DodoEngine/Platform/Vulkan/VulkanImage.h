@@ -13,20 +13,19 @@ class VulkanBuffer;
 class VulkanImage {
  public:
   VulkanImage(uint32_t _imageWidth, uint32_t _imageHeight, VkImageTiling _tiling, uint32_t _usage, uint32_t _featureFlags);
-
   VulkanImage(uint32_t _imageWidth, uint32_t _imageHeight, VkImageTiling _tiling, uint32_t _usage, VkFormat _format);
-
-  void CreateImage(uint32_t _imageWidth, uint32_t _imageHeight, VkImageTiling _tiling, uint32_t _usage, VkFormat _format);
 
   ~VulkanImage();
 
   VkFormat GetFormat() const { return m_Format; }
 
   void TransitionImageLayout(VkImageLayout _newLayout);
-
   void CopyFromBuffer(const VulkanBuffer& _imageBuffer);
 
   operator const VkImage&() const { return m_Image; }
+
+private:
+  void CreateImage(uint32_t _imageWidth, uint32_t _imageHeight, VkImageTiling _tiling, uint32_t _usage, VkFormat _format);
 
  protected:
   VkImage m_Image;

@@ -18,10 +18,12 @@ void GltfLoader::ProcessPrimitive(const tinygltf::Primitive& _primitive, const t
                                   std::vector<uint32_t>& _indices, glm::mat4 _accTransform) {
   std::vector<glm::vec3> vertices;
   std::vector<glm::vec2> texCoords;
+  std::vector<glm::vec3> normals;
 
   ProcessIndices(_primitive, _model, _indices);
   ProcessVertices(_primitive, _model, vertices, _accTransform);
   ProcessTexCoords(_primitive, _model, texCoords);
+  ProcessNormals(_primitive, _model, normals);
 
   if (vertices.size() != texCoords.size())
   {
@@ -31,7 +33,7 @@ void GltfLoader::ProcessPrimitive(const tinygltf::Primitive& _primitive, const t
   const uint32_t verticesSize = vertices.size();
   _vertices.resize(verticesSize);
   for (uint32_t i = 0; i < verticesSize; ++i) {
-    _vertices[i]= {vertices[i], DEFAULT_COLOR, texCoords[i]};
+    _vertices[i] = {vertices[i], DEFAULT_COLOR, texCoords[i], normals[i]};
   }
 }
 
@@ -43,6 +45,19 @@ void GltfLoader::ProcessTexCoords(const tinygltf::Primitive& _primitive, const t
   // Tex Coords
   for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
     _texCoords.push_back({texCoords[i], texCoords[i + 1]});
+  }
+}
+
+void GltfLoader::ProcessNormals(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<glm::vec3>& _normals) 
+{
+  std::vector<float> normals;
+  const AttributeType normalAttributeType = AttributeType::NORMAL;
+  const tinygltf::Accessor& accessor = _model.accessors.at(GetAccessorByName(normalAttributeType, _primitive));
+  const AttributeSpec attributeSpec = GetDataByAccessor<float>(accessor, {normalAttributeType, AccessorType::VEC3}, _primitive, _model, normals);
+
+  // Normals
+  for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
+    _normals.push_back({normals[i], normals[i + 1], normals[i + 2]});
   }
 }
 
@@ -60,25 +75,6 @@ void GltfLoader::ProcessVertices(const tinygltf::Primitive& _primitive, const ti
 }
 
 void GltfLoader::ProcessIndices(const tinygltf::Primitive& _primitive, const tinygltf::Model& _model, std::vector<uint32_t>& _indices) {
-  // Indices
-  /*const tinygltf::Accessor& accessor = _model.accessors[_primitive.indices];
-  if (accessor.componentType == 5125) {
-    std::vector<uint32_t> indices;
-    const AttributeSpec attributeSpec = GetDataByAccessor<uint32_t>(accessor, {AttributeType::POSITION, AccessorType::SCALAR}, _primitive, _model, indices);
-
-    for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
-      _indices.push_back(indices[i]);
-    }
-  } else {
-
-    std::vector<uint16_t> indices;
-    const AttributeSpec attributeSpec = GetDataByAccessor<uint16_t>(accessor, {AttributeType::POSITION, AccessorType::SCALAR}, _primitive, _model, indices);
-
-    for (uint32_t i = 0; i < attributeSpec.m_IterSize; i += attributeSpec.m_Increment) {
-      _indices.push_back(indices[i]);
-    }
-  }*/
-
   // Indices
   const tinygltf::Accessor indicesAccessor = _model.accessors[_primitive.indices];
   const tinygltf::BufferView indicesBufferView = _model.bufferViews[indicesAccessor.bufferView];
@@ -122,8 +118,14 @@ void GltfLoader::ProcessTextureFiles(const tinygltf::Primitive& _primitive, cons
   _textureFiles.push_back(image.uri);
 }
 
-void GltfLoader::ProcessNode(tinygltf::Model& model, const int& nodeIndex, const std::filesystem::path& modelPath, std::vector<dodo::Ref<dodo::Mesh>>& meshes, const glm::mat4& _accTransform) {
+void GltfLoader::ProcessMeshNode(tinygltf::Model& model, const int& nodeIndex, const std::filesystem::path& modelPath, std::vector<dodo::Ref<dodo::Mesh>>& meshes, const glm::mat4& _accTransform) {
   tinygltf::Node& node = model.nodes[nodeIndex];
+
+  // Ensuring this is a mesh node
+  if (node.mesh == -1) {
+    return;
+  }
+
   tinygltf::Mesh& nodeMesh = model.meshes[node.mesh];
   glm::mat4 accTransform = _accTransform;
 
@@ -159,7 +161,7 @@ void GltfLoader::ProcessNode(tinygltf::Model& model, const int& nodeIndex, const
 
   // Children
   for (const auto& childrenNodeId : node.children) {
-    ProcessNode(model, childrenNodeId, modelPath, meshes, accTransform);
+    ProcessMeshNode(model, childrenNodeId, modelPath, meshes, accTransform);
   }
 }
 
@@ -180,7 +182,6 @@ std::vector<Ref<Mesh>> GltfLoader::LoadFromFile(const char* _modelFileName) {
   std::vector<Ref<Mesh>> meshes;
 
   bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, _modelFileName);
-  //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
 
   if (!warn.empty()) {
     DODO_WARN("[tinygltf] {}", warn.c_str());
@@ -199,7 +200,7 @@ std::vector<Ref<Mesh>> GltfLoader::LoadFromFile(const char* _modelFileName) {
   const std::filesystem::path modelPath = _modelFileName;
 
   for (const int& nodeIndex : rootNodes) {
-    ProcessNode(model, nodeIndex, modelPath, meshes, glm::mat4(1.0f));
+    ProcessMeshNode(model, nodeIndex, modelPath, meshes, glm::mat4(1.0f));
   }
 
   return meshes;

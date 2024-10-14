@@ -11,18 +11,22 @@ layout(location = 5) in vec3 fragPos;
 
 layout(location = 0) out vec4 outColor;
 
+vec3 warmColor = vec3(0.3f, 0.3f, 0.0f) + 0.25f * fragColor;
+
+vec3 lit(vec3 lightPos, vec3 normals, vec3 vertexPos)
+{
+	vec3 rl = reflect(-lightPos, normals);
+	float s = clamp(100.0f * dot(rl, vertexPos) - 97.0f, 0.0f, 1.0f);
+	vec3 highlightColor = vec3(2, 2, 2);
+	return mix(warmColor, highlightColor, s);
+}
+
 void main() {
 	// outColor = texture(texSamplers[textureId], fragTexCoords);
-	vec3 cCool = vec3(0, 0, 0.55f) + 0.25f * vec3(1, 0, 0);
-	vec3 cWarm = vec3(0.3f, 0.3f, 0) + 0.25f * vec3(1, 0, 0);
-	vec3 cHighlight = vec3(1, 1, 1);
+	outColor = vec4(fragColor, 1.0f);
 
-	float nl = dot(fragNormals, lightPos);
-	float t = (nl + 1) / 2;
-	vec3 r = 2 * nl * fragNormals - lightPos;
-	float s = 100 * dot(r, fragPos) - 97;
-
-	vec3 cShaded = s * cHighlight + (1 - s) * (t * cWarm + (1 - t) * cCool);
-
-	outColor = vec4(cShaded.xyz, 1.0f);
+	vec3 normalsNormalized = normalize(fragNormals);
+	vec3 lightPosNormalized = normalize(lightPos - fragPos);
+	float NdL = clamp(dot(normalsNormalized, lightPosNormalized), 0.0f, 1.0f);
+	outColor.rgb += NdL * vec3(1, 1, 1) * lit(lightPosNormalized, normalsNormalized, fragPos);
 }

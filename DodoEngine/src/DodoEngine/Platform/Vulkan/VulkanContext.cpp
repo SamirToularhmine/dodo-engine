@@ -60,15 +60,6 @@ void VulkanContext::Init(const Window& _window) {
 
   vmaCreateAllocator(&vmaAllocatorCreateInfo, &m_VmaAllocator);
 
-  m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
-
-  VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
-
-  m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, swapChainData);
-  m_VulkanDescriptorPool = std::make_shared<VulkanDescriptorPool>(MAX_FRAMES_IN_FLIGHT, m_VulkanDevice);
-
-  m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
-
   const QueuesInfo& deviceQueuesInfo = m_VulkanPhysicalDevice->GetQueues();
 
   VkCommandPoolCreateInfo commandPoolCreateInfo{};
@@ -115,10 +106,83 @@ void VulkanContext::Init(const Window& _window) {
     }
   }
 
+  m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
+  VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
+
+  VulkanRenderPassAttachments renderPassAttachments {
+    {
+      {
+          .format = swapChainData.m_VkSurfaceFormat.format,
+          .samples = VK_SAMPLE_COUNT_1_BIT,
+          .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+          .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+          .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+          .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+      },
+      {
+        .format = swapChainData.m_DepthImageFormat, .samples = VK_SAMPLE_COUNT_1_BIT, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE, .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED, .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      }
+    }
+  };
+
+  m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, renderPassAttachments);
+  m_VulkanDescriptorPool = std::make_shared<VulkanDescriptorPool>(MAX_FRAMES_IN_FLIGHT, m_VulkanDevice);
+  m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
+
+  const VkExtent2D viewPortSize = swapChainData.m_VkExtent;
+  m_OffScreenTextureImage = VulkanTextureImage::CreateEmptyImage(viewPortSize.width, viewPortSize.height);
+  m_DepthImage = std::make_unique<VulkanDepthImage>(viewPortSize.width, viewPortSize.height);
+
+  VulkanRenderPassAttachments offScreenRenderPassAttachments{
+    {
+      {
+          .format = swapChainData.m_VkSurfaceFormat.format,
+          .samples = VK_SAMPLE_COUNT_1_BIT,
+          .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+          .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+          .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+          .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      },
+      {
+        .format = swapChainData.m_DepthImageFormat, .samples = VK_SAMPLE_COUNT_1_BIT, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE, .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED, .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+      }
+    }
+  };
+
+  const std::vector<VkImageView> attachments = {m_OffScreenTextureImage->GetImageView(), m_DepthImage->GetImageView()};
+  m_OffScreenFrameBuffer = std::make_unique<VulkanFrameBuffer>(m_VulkanDevice, *m_VulkanRenderPass, attachments, swapChainData);
+  m_OffScreenRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, offScreenRenderPassAttachments);
+
   DODO_INFO("Vulkan context initialized successfully");
 }
 
 void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData) {
+  vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[_vulkanRenderPassData.m_FrameIndex], VK_TRUE, UINT64_MAX);
+
+  BeginCommandBuffer(_vulkanRenderPassData);
+
+  _vulkanRenderPassData.m_FrameBuffer = *m_OffScreenFrameBuffer;
+
+  m_OffScreenRenderPass->Begin(_vulkanRenderPassData);
+}
+
+void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) {
+  DODO_TRACE(GameLoop);
+
+  const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameIndex;
+
+  m_OffScreenRenderPass->End(_vulkanRenderPassData);
+}
+
+void VulkanContext::BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData) {
   const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
 
   vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
@@ -135,6 +199,26 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
 
   vkResetFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex]);
 
+  _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
+
+  m_VulkanRenderPass->Begin(_vulkanRenderPassData);
+}
+
+void VulkanContext::EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) {
+  DODO_TRACE(GameLoop);
+
+  const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameIndex;
+
+  m_VulkanRenderPass->End(_vulkanRenderPassData);
+
+  EndCommandBuffer(currentFrameIndex);
+  SubmitQueue(currentFrameIndex);
+  PresentQueue(_vulkanRenderPassData);
+}
+
+void VulkanContext::BeginCommandBuffer(VulkanRenderPassData& _vulkanRenderPassData) {
+  const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
+
   const VkCommandBuffer chosenCommandBuffer = m_VkCommandBuffers[currentFrameIndex];
   vkResetCommandBuffer(chosenCommandBuffer, 0);
 
@@ -148,55 +232,52 @@ void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData)
 
   _vulkanRenderPassData.m_RenderPassStarted = true;
   _vulkanRenderPassData.m_CommandBuffer = chosenCommandBuffer;
-  _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
   _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
   _vulkanRenderPassData.m_FrameIndex = currentFrameIndex;
-
-  m_VulkanRenderPass->Begin(_vulkanRenderPassData);
 }
 
-void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) const {
-  DODO_TRACE(GameLoop);
-
-  const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameIndex;
-
-  m_VulkanRenderPass->End(_vulkanRenderPassData);
-
-  VkResult endCommandBufferResult = vkEndCommandBuffer(m_VkCommandBuffers[currentFrameIndex]);
+void VulkanContext::EndCommandBuffer(uint32_t _frameIndex) {
+  VkResult endCommandBufferResult = vkEndCommandBuffer(m_VkCommandBuffers[_frameIndex]);
   if (endCommandBufferResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not end the render pass");
   }
+}
 
+void VulkanContext::SubmitQueue(uint32_t _frameIndex) const {
   VkSubmitInfo submitInfo{};
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
   const VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
   submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = &m_VkImagesAvailable[currentFrameIndex];
+  submitInfo.pWaitSemaphores = &m_VkImagesAvailable[_frameIndex];
   submitInfo.pWaitDstStageMask = waitStages;
   submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = &m_VkCommandBuffers[currentFrameIndex];
+  submitInfo.pCommandBuffers = &m_VkCommandBuffers[_frameIndex];
 
   submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = &m_VkRenderFinishedSemaphores[currentFrameIndex];
+  submitInfo.pSignalSemaphores = &m_VkRenderFinishedSemaphores[_frameIndex];
 
   const VulkanDevice::Queues& deviceQueues = m_VulkanDevice->GetQueues();
 
-  const VkResult submitQueueResult = vkQueueSubmit(deviceQueues.m_GraphicsFamilyQueue, 1, &submitInfo, m_VkInFlightFences[currentFrameIndex]);
+  const VkResult submitQueueResult = vkQueueSubmit(deviceQueues.m_GraphicsFamilyQueue, 1, &submitInfo, m_VkInFlightFences[_frameIndex]);
   if (submitQueueResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not submit the queue command buffer");
   }
+}
 
+void VulkanContext::PresentQueue(const VulkanRenderPassData& _vulkanRenderPassData) {
   VkPresentInfoKHR presentInfo{};
   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
   presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = &m_VkRenderFinishedSemaphores[currentFrameIndex];
+  presentInfo.pWaitSemaphores = &m_VkRenderFinishedSemaphores[_vulkanRenderPassData.m_FrameIndex];
 
   const VkSwapchainKHR swapChains[] = {*m_VulkanSwapChain};
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapChains;
   presentInfo.pImageIndices = &_vulkanRenderPassData.m_ImageIndex;
+
+  const VulkanDevice::Queues& deviceQueues = m_VulkanDevice->GetQueues();
 
   vkQueuePresentKHR(deviceQueues.m_PresentationQueue, &presentInfo);
 }
@@ -207,6 +288,8 @@ void VulkanContext::DestroyFrameBuffers() {
   }
 
   m_VkFramebuffers.clear();
+
+  vkDestroyFramebuffer(*m_VulkanDevice, *m_OffScreenFrameBuffer, nullptr);
 }
 
 void VulkanContext::Shutdown() {
@@ -223,6 +306,8 @@ void VulkanContext::Shutdown() {
   vkDestroyCommandPool(*m_VulkanDevice, m_VkCommandPool, nullptr);
 
   m_VulkanSwapChain.reset();
+  m_DepthImage.reset();
+  m_OffScreenTextureImage.reset();
 
   vmaDestroyAllocator(m_VmaAllocator);
 }

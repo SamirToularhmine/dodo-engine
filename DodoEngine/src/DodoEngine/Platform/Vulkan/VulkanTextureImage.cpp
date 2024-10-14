@@ -10,6 +10,15 @@
 
 DODO_BEGIN_NAMESPACE
 
+Ptr<VulkanTextureImage> VulkanTextureImage::CreateFromImageData(const unsigned char* _imageData, uint32_t _imageSize, uint32_t _imageWidth,
+                                                                uint32_t _imageHeight) {
+  return std::make_unique<VulkanTextureImage>(_imageData, _imageSize, _imageWidth, _imageHeight);
+}
+
+Ptr<VulkanTextureImage> VulkanTextureImage::CreateEmptyImage(uint32_t _imageWidth, uint32_t _imageHeight) {
+  return std::make_unique<VulkanTextureImage>(_imageWidth, _imageHeight);
+}
+
 VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t _imageSize, uint32_t _imageWidth, uint32_t _imageHeight) {
   const VulkanContext& vulkanContext = VulkanContext::Get();
   const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
@@ -20,7 +29,7 @@ VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t
   textureBuffer.SetMemory(_imageData, _imageSize);
 
   m_VulkanImage = std::make_unique<VulkanImage>(_imageWidth, _imageHeight, VK_IMAGE_TILING_OPTIMAL,
-                                                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_SRGB);
+                                                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_B8G8R8A8_SRGB);
   m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   // From buffer to image
@@ -28,11 +37,39 @@ VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t
 
   m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+  Create();
+}
+
+VulkanTextureImage::VulkanTextureImage(uint32_t _imageWidth, uint32_t _imageHeight) {
+  m_VulkanImage = std::make_unique<VulkanImage>(_imageWidth, _imageHeight, VK_IMAGE_TILING_OPTIMAL,
+                                                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                                VK_FORMAT_B8G8R8A8_SRGB);
+  m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+  Create();
+}
+
+VulkanTextureImage::~VulkanTextureImage() {
+  const VulkanContext& vulkanContext = VulkanContext::Get();
+  const VulkanDevice& vulkanDevice = *vulkanContext.GetVulkanDevice();
+
+  vkDeviceWaitIdle(vulkanDevice);
+
+  vkDestroySampler(vulkanDevice, m_Sampler, nullptr);
+  vkDestroyImageView(vulkanDevice, m_ImageView, nullptr);
+}
+
+void VulkanTextureImage::Create() {
+  const VulkanContext& vulkanContext = VulkanContext::Get();
+  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const VulkanPhysicalDevice& vulkanPhysicalDevice = *vulkanContext.GetVulkanPhysicalDevice();
+
   VkImageViewCreateInfo viewInfo{};
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = *m_VulkanImage;
   viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+  viewInfo.format = VK_FORMAT_B8G8R8A8_SRGB;
   viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.levelCount = 1;
@@ -66,16 +103,6 @@ VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t
   if (textureSamplerCreateResult != VK_SUCCESS) {
     DODO_ERROR("Couldn't create sampler for texture");
   }
-}
-
-VulkanTextureImage::~VulkanTextureImage() {
-  const VulkanContext& vulkanContext = VulkanContext::Get();
-  const VulkanDevice& vulkanDevice = *vulkanContext.GetVulkanDevice();
-
-  vkDeviceWaitIdle(vulkanDevice);
-
-  vkDestroySampler(vulkanDevice, m_Sampler, nullptr);
-  vkDestroyImageView(vulkanDevice, m_ImageView, nullptr);
 }
 
 DODO_END_NAMESPACE

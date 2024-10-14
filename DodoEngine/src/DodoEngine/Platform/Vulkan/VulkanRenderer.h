@@ -63,15 +63,15 @@ class VulkanRenderer : public Renderer {
   void Shutdown() override;
 
   void BeginRenderPass() override;
-
   void EndRenderPass() override;
+
+  void BeginUIRenderPass() override;
+  void EndUIRenderPass() override;
 
   void RegisterModel(Ref<Model>& _mesh) override;
 
   void DrawQuad(const MeshTransform& _meshTransform) override;
-
   void DrawCube(const MeshTransform& _meshTransform) override;
-
   void DrawModel(Ref<Model>& _mesh, const MeshTransform& _meshTransform) override;
 
   uint32_t GetFrameIndex() const override;
