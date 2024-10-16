@@ -20,6 +20,7 @@ public:
     ~VulkanTextureImage();
 
     const VkImageView& GetImageView() const { return m_ImageView; }
+    const VulkanImage& GetImage() const { return *m_VulkanImage; }
     const VkSampler& GetSampler() const { return m_Sampler; }
 
     operator const VkImage&() const { return *m_VulkanImage; }

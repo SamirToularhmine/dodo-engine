@@ -35,6 +35,7 @@ struct VulkanRenderPassData {
   VulkanSwapChainData m_SwapChainData;
   VkPipelineLayout m_PipelineLayout;
   Ref<VulkanDescriptorSet> m_DescriptorSet;
+  VkExtent2D m_FrameSize;
   bool m_RenderPassStarted{false};
 
   VulkanRenderPassData(uint32_t _frameCount) : m_FrameCount(_frameCount) {}
@@ -57,8 +58,10 @@ class VulkanContext : public GraphicContext {
   void BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
   void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
 
-  void BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
+  bool BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
   void EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
+
+  void RescaleOffscreenTextureImage(uint32_t _width, uint32_t _height);
 
   const Ref<VulkanDevice>& GetVulkanDevice() const { return m_VulkanDevice; }
   const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_VulkanPhysicalDevice; }

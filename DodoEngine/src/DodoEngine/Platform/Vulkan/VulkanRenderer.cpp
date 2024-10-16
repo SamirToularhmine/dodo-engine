@@ -67,8 +67,10 @@ void VulkanRenderer::Init(const Window& _window) {
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
 }
 
-void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _deltaTime) {
+void VulkanRenderer::Update(const uint32_t& _frameNumber, const Camera& _camera, const Light& _light, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
+
+  BeginRenderPass(_frameNumber);
 
   VulkanRenderPassData& renderPassData = m_RendererData.m_RenderPassData;
   const VkCommandBuffer& commandBuffer = renderPassData.m_CommandBuffer;
@@ -77,7 +79,7 @@ void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _d
   m_UniformMvp.m_LightPos = _light.m_Position;
   BatchMvpUbo(_camera, renderPassData.m_SwapChainData, _deltaTime);
 
-  // Grid pass
+  // Grid
   {
     m_GridGraphicPipeline->Bind(commandBuffer);
     m_GridDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer, frameIndex);
@@ -96,7 +98,7 @@ void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _d
     vkCmdDrawIndexed(commandBuffer, _indexBuffer.GetElementCount(), 1, 0, 0, 0);
   }
 
-  // Default shader pass
+  // Default shader
   {
     m_DefaultGraphicPipeline->Bind(commandBuffer);
 
@@ -115,7 +117,7 @@ void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _d
         const Ptr<VulkanTextureImage>& textureImage = texture->GetTextureImage();
 
         RendererPushConstants rendererPushConstants{.m_ModelId = modelId, .m_TextureId = texture->GetId()};
-        vkCmdPushConstants(commandBuffer, renderPassData.m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RendererPushConstants),
+        vkCmdPushConstants(commandBuffer, m_DefaultGraphicPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(RendererPushConstants),
                            &rendererPushConstants);
 
         const VulkanBuffer& _vertexBuffer = *_mesh->m_VertexBuffer;
@@ -136,6 +138,8 @@ void VulkanRenderer::Update(const Camera& _camera, const Light& _light, float _d
       modelId += instanceCount;
     }
   }
+
+  EndRenderPass();
 }
 
 void VulkanRenderer::Shutdown() {
@@ -146,12 +150,11 @@ void VulkanRenderer::Shutdown() {
   m_VulkanContext.Shutdown();
 }
 
-void VulkanRenderer::BeginRenderPass() {
+void VulkanRenderer::BeginRenderPass(const uint32_t& _frameNumber) {
   DODO_TRACE(VulkanRenderer);
 
-  m_RendererData.m_RenderPassData = {m_FrameCount++};
+  m_RendererData.m_RenderPassData = {_frameNumber};
   m_VulkanContext.BeginRenderPass(m_RendererData.m_RenderPassData);
-  m_RendererData.m_RenderPassData.m_PipelineLayout = m_DefaultGraphicPipeline->GetPipelineLayout();
 }
 
 void VulkanRenderer::EndRenderPass() {
@@ -164,10 +167,10 @@ void VulkanRenderer::EndRenderPass() {
   m_RendererData.ResetTransforms();
 }
 
-void VulkanRenderer::BeginUIRenderPass() {
+bool VulkanRenderer::BeginUIRenderPass() {
   DODO_TRACE(VulkanRenderer);
   
-  m_VulkanContext.BeginUIRenderPass(m_RendererData.m_RenderPassData);
+  return m_VulkanContext.BeginUIRenderPass(m_RendererData.m_RenderPassData);
 }
 
 void VulkanRenderer::EndUIRenderPass() {

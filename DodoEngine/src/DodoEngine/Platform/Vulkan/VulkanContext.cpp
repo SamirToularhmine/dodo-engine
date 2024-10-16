@@ -109,66 +109,64 @@ void VulkanContext::Init(const Window& _window) {
   m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
   VulkanSwapChainData swapChainData = m_VulkanSwapChain->GetSpec();
 
-  VulkanRenderPassAttachments renderPassAttachments {
-    {
-      {
-          .format = swapChainData.m_VkSurfaceFormat.format,
-          .samples = VK_SAMPLE_COUNT_1_BIT,
-          .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-          .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-          .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-          .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-      },
-      {
-        .format = swapChainData.m_DepthImageFormat, .samples = VK_SAMPLE_COUNT_1_BIT, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE, .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED, .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-      }
-    }
-  };
+  VulkanRenderPassAttachments renderPassAttachments{{{
+                                                         .format = swapChainData.m_VkSurfaceFormat.format,
+                                                         .samples = VK_SAMPLE_COUNT_1_BIT,
+                                                         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                                         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                                                         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                                                         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                                                         .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                                     },
+                                                     {
+                                                         .format = swapChainData.m_DepthImageFormat,
+                                                         .samples = VK_SAMPLE_COUNT_1_BIT,
+                                                         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                                         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                         .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                                                         .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                                                         .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                                     }}};
 
   m_VulkanRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, renderPassAttachments);
   m_VulkanDescriptorPool = std::make_shared<VulkanDescriptorPool>(MAX_FRAMES_IN_FLIGHT, m_VulkanDevice);
   m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
 
   const VkExtent2D viewPortSize = swapChainData.m_VkExtent;
-  m_OffScreenTextureImage = VulkanTextureImage::CreateEmptyImage(viewPortSize.width, viewPortSize.height);
-  m_DepthImage = std::make_unique<VulkanDepthImage>(viewPortSize.width, viewPortSize.height);
+  RescaleOffscreenTextureImage(viewPortSize.width, viewPortSize.height);
 
-  VulkanRenderPassAttachments offScreenRenderPassAttachments{
-    {
-      {
-          .format = swapChainData.m_VkSurfaceFormat.format,
-          .samples = VK_SAMPLE_COUNT_1_BIT,
-          .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-          .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-          .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-          .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-          .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-          .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      },
-      {
-        .format = swapChainData.m_DepthImageFormat, .samples = VK_SAMPLE_COUNT_1_BIT, .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE, .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE, .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED, .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-      }
-    }
-  };
-
-  const std::vector<VkImageView> attachments = {m_OffScreenTextureImage->GetImageView(), m_DepthImage->GetImageView()};
-  m_OffScreenFrameBuffer = std::make_unique<VulkanFrameBuffer>(m_VulkanDevice, *m_VulkanRenderPass, attachments, swapChainData);
+  VulkanRenderPassAttachments offScreenRenderPassAttachments{{{
+                                                                  .format = swapChainData.m_VkSurfaceFormat.format,
+                                                                  .samples = VK_SAMPLE_COUNT_1_BIT,
+                                                                  .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                                                  .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                                                                  .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                                                                  .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                                  .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                                                                  .finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                              },
+                                                              {
+                                                                  .format = swapChainData.m_DepthImageFormat,
+                                                                  .samples = VK_SAMPLE_COUNT_1_BIT,
+                                                                  .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                                                  .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                                  .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                                                                  .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                                                  .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                                                                  .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                                              }}};
   m_OffScreenRenderPass = std::make_shared<VulkanRenderPass>(m_VulkanDevice, offScreenRenderPassAttachments);
 
   DODO_INFO("Vulkan context initialized successfully");
 }
 
 void VulkanContext::BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData) {
-  vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[_vulkanRenderPassData.m_FrameIndex], VK_TRUE, UINT64_MAX);
-
   BeginCommandBuffer(_vulkanRenderPassData);
 
+  const VulkanImage& offScreenImage = m_OffScreenTextureImage->GetImage();
+  _vulkanRenderPassData.m_FrameSize = {offScreenImage.GetWidth(), offScreenImage.GetHeight()};
   _vulkanRenderPassData.m_FrameBuffer = *m_OffScreenFrameBuffer;
 
   m_OffScreenRenderPass->Begin(_vulkanRenderPassData);
@@ -182,26 +180,30 @@ void VulkanContext::EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassD
   m_OffScreenRenderPass->End(_vulkanRenderPassData);
 }
 
-void VulkanContext::BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData) {
+bool VulkanContext::BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData) {
   const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
 
   vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
 
   if (!m_VulkanSwapChain->AcquireNextImage(m_VkImagesAvailable[currentFrameIndex], _vulkanRenderPassData.m_ImageIndex)) {
     DODO_ERROR("Could not acquire a new Swap Chain image, trying to recreate the Swap Chain...");
+    
     m_VulkanSwapChain.reset();
     DestroyFrameBuffers();
     m_VulkanSwapChain = std::make_shared<VulkanSwapChain>(*m_VulkanSurface, *m_VulkanPhysicalDevice, m_VulkanDevice, m_NativeWindow);
     m_VulkanSwapChain->InitFrameBuffers(m_VkFramebuffers, *m_VulkanRenderPass);
-    // m_VulkanGraphicPipeline->SetViewPort(m_VulkanSwapChain->GetSpec());
-    return;
+    _vulkanRenderPassData.m_SwapChainData = m_VulkanSwapChain->GetSpec();
+    return false;
   }
 
   vkResetFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex]);
 
+  _vulkanRenderPassData.m_FrameSize = {_vulkanRenderPassData.m_SwapChainData.m_VkExtent};
   _vulkanRenderPassData.m_FrameBuffer = m_VkFramebuffers[_vulkanRenderPassData.m_ImageIndex];
 
   m_VulkanRenderPass->Begin(_vulkanRenderPassData);
+
+  return true;
 }
 
 void VulkanContext::EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPassData) {
@@ -216,11 +218,27 @@ void VulkanContext::EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPas
   PresentQueue(_vulkanRenderPassData);
 }
 
+void VulkanContext::RescaleOffscreenTextureImage(uint32_t _width, uint32_t _height) {
+  m_OffScreenTextureImage.reset();
+  m_DepthImage.reset();
+  m_OffScreenFrameBuffer.reset();
+
+  m_OffScreenTextureImage = VulkanTextureImage::CreateEmptyImage(_width, _height);
+  m_DepthImage = std::make_unique<VulkanDepthImage>(_width, _height);
+
+  const std::vector<VkImageView> attachments = {m_OffScreenTextureImage->GetImageView(), m_DepthImage->GetImageView()};
+  m_OffScreenFrameBuffer = std::make_unique<VulkanFrameBuffer>(m_VulkanDevice, *m_VulkanRenderPass, attachments, _width, _height);
+}
+
 void VulkanContext::BeginCommandBuffer(VulkanRenderPassData& _vulkanRenderPassData) {
   const uint32_t currentFrameIndex = _vulkanRenderPassData.m_FrameCount % MAX_FRAMES_IN_FLIGHT;
 
+  vkDeviceWaitIdle(*m_VulkanDevice);
+
   const VkCommandBuffer chosenCommandBuffer = m_VkCommandBuffers[currentFrameIndex];
   vkResetCommandBuffer(chosenCommandBuffer, 0);
+
+  vkWaitForFences(*m_VulkanDevice, 1, &m_VkInFlightFences[currentFrameIndex], VK_TRUE, UINT64_MAX);
 
   VkCommandBufferBeginInfo commandBufferBeginInfo{};
   commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -288,14 +306,14 @@ void VulkanContext::DestroyFrameBuffers() {
   }
 
   m_VkFramebuffers.clear();
-
-  vkDestroyFramebuffer(*m_VulkanDevice, *m_OffScreenFrameBuffer, nullptr);
 }
 
 void VulkanContext::Shutdown() {
   vkDeviceWaitIdle(*m_VulkanDevice);
 
   DestroyFrameBuffers();
+
+  vkDestroyFramebuffer(*m_VulkanDevice, *m_OffScreenFrameBuffer, nullptr);
 
   for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
     vkDestroySemaphore(*m_VulkanDevice, m_VkImagesAvailable[i], nullptr);

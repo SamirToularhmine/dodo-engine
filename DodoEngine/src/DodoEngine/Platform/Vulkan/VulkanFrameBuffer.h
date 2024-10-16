@@ -15,7 +15,7 @@ struct VulkanSwapChainData;
 class VulkanFrameBuffer {
  public:
   VulkanFrameBuffer(Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPass& _vulkanRenderPass, const std::vector<VkImageView>& _attachments,
-                    const VulkanSwapChainData& _swapChainData);
+                    const uint32_t& _width, const uint32_t& _height);
 
   ~VulkanFrameBuffer();
 

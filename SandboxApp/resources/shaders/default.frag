@@ -22,8 +22,8 @@ vec3 lit(vec3 lightPos, vec3 normals, vec3 vertexPos)
 }
 
 void main() {
-	// outColor = texture(texSamplers[textureId], fragTexCoords);
-	outColor = vec4(fragColor, 1.0f);
+	outColor = texture(texSamplers[textureId], fragTexCoords);
+	// outColor = vec4(fragColor, 1.0f);
 
 	vec3 normalsNormalized = normalize(fragNormals);
 	vec3 lightPosNormalized = normalize(lightPos - fragPos);

@@ -59,13 +59,10 @@ class VulkanRenderer : public Renderer {
   ~VulkanRenderer() override = default;
 
   void Init(const Window& _window) override;
-  void Update(const Camera& _camera, const Light& _light, float _deltaTime) override;
+  void Update(const uint32_t& _frameNumber, const Camera& _camera, const Light& _light, float _deltaTime) override;
   void Shutdown() override;
 
-  void BeginRenderPass() override;
-  void EndRenderPass() override;
-
-  void BeginUIRenderPass() override;
+  bool BeginUIRenderPass() override;
   void EndUIRenderPass() override;
 
   void RegisterModel(Ref<Model>& _mesh) override;
@@ -79,12 +76,15 @@ class VulkanRenderer : public Renderer {
  private:
   std::vector<UniformBufferObject> BatchMvpUbo(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime);
 
+  void BeginRenderPass(const uint32_t& _frameNumber);
+  void EndRenderPass();
+
  private:
   VulkanContext& m_VulkanContext;
-  uint32_t m_FrameCount{0};
+  RendererData m_RendererData;
   Ref<VulkanBuffer> m_UniformBuffer;
   UniformBufferObject m_UniformMvp;
-  RendererData m_RendererData;
+  
   Ref<VulkanGraphicPipeline> m_DefaultGraphicPipeline;
   Ref<VulkanDescriptorSet> m_DefaultDescriptorSet;
 

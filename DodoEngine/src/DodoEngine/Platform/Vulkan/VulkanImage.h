@@ -18,6 +18,8 @@ class VulkanImage {
   ~VulkanImage();
 
   VkFormat GetFormat() const { return m_Format; }
+  uint32_t GetWidth() const { return m_Width; }
+  uint32_t GetHeight() const { return m_Height; }
 
   void TransitionImageLayout(VkImageLayout _newLayout);
   void CopyFromBuffer(const VulkanBuffer& _imageBuffer);

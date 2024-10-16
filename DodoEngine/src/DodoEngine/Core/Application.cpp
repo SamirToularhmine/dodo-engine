@@ -53,7 +53,7 @@ void Application::Run() {
     Ref<Model> cubeMesh = std::make_shared<Model>(cubeMeshes);
     m_Renderer->RegisterModel(cubeMesh);
 
-    // Ref<Mesh> hasbullah = FbxLoader::LoadFromFile("resources/models/Hasbullah.fbx");
+    // Ref<Model> hasbullah = std::make_shared<Model>(FbxLoader::LoadFromFile("resources/models/Hasbullah.fbx"));
     // Ref<Mesh> vikingRoom = ObjLoader::LoadFromFile("resources/models/viking/VikingRoom.obj", "resources/models/viking/viking_room.png");
     // Ref<Mesh> chestnut = ObjLoader::LoadFromFile("resources/models/chestnut/chestnut.obj", "resources/models/chestnut/model_Fire_emissive_transparent_color.tga.png");
     // Ref<Mesh> cube = ObjLoader::LoadFromFile("resources/models/cube/Cube.obj", "resources/models/cube/Cube.png");
@@ -65,6 +65,7 @@ void Application::Run() {
     Ref<Model> sphere = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sphere/sphere.gltf"));
     const float movingSpeed = 0.1f;
     bool reverse = false;
+    uint32_t frameNumber = 0;
 
     while (!m_Window->ShouldClose()) {
       DODO_TRACE(Application);
@@ -79,7 +80,7 @@ void Application::Run() {
         m_Renderer->DrawModel(sphere, {{i, 1, 1}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
         m_Renderer->DrawModel(sphere, {{i, 1, -2}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
       }
-      
+
       const float pos = easeInOutSine(rotateDegree / 500) * 10.0f;
       const glm::vec3 lightPos = {pos, 2, 5.0f};
       m_Renderer->DrawCube({lightPos, {0, 0, 0}, {0.25f, 0.25f, 0.25f}});
@@ -102,21 +103,13 @@ void Application::Run() {
 
       m_Camera->Update(deltaTime);
 
-      // Main pass
-      {
-          m_Renderer->BeginRenderPass();
-          m_Renderer->Update(*m_Camera, Light{lightPos}, deltaTime);
-          m_Renderer->EndRenderPass();
-      }
+      // Scene pass
+      { m_Renderer->Update(frameNumber, *m_Camera, Light{lightPos}, deltaTime); }
 
       // UI pass
-      {
-          m_Renderer->BeginUIRenderPass();
-          m_ImGuiLayer->Update(m_Renderer->GetFrameIndex());
-          m_Renderer->EndUIRenderPass();
-      }
+      { m_ImGuiLayer->Update(*m_Renderer); }
 
-
+      frameNumber++;
       m_Camera->Reset();
       m_Window->SwapBuffers();
     }

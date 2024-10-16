@@ -48,7 +48,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanSurface& _vulkanSurface, const Vulk
   SurfaceFormats& surfaceFormats = m_Spec.m_VkSurfaceFormats;
   VkSurfaceFormatKHR chosenSurfaceFormat = surfaceFormats.front();
   for (const VkSurfaceFormatKHR& surfaceFormat : surfaceFormats) {
-    if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+    if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM && surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
       chosenSurfaceFormat = surfaceFormat;
       break;
     }
@@ -142,8 +142,9 @@ VulkanSwapChain::~VulkanSwapChain() {
 void VulkanSwapChain::InitFrameBuffers(std::vector<VulkanFrameBuffer>& _frameBuffers, const VulkanRenderPass& _vulkanRenderPass) const {
   std::ranges::for_each(std::cbegin(m_ImageViews), std::cend(m_ImageViews), [&](const VkImageView& _imageView) {
     const std::vector<VkImageView> attachments = {_imageView, m_DepthImage->GetImageView()};
+    const VkExtent2D frameBufferSize = m_ChosenSwapChainDetails.m_VkExtent;
 
-    _frameBuffers.emplace_back(m_VulkanDevice, _vulkanRenderPass, attachments, m_ChosenSwapChainDetails);
+    _frameBuffers.emplace_back(m_VulkanDevice, _vulkanRenderPass, attachments, frameBufferSize.width, frameBufferSize.height);
   });
 }
 

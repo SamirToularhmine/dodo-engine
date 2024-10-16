@@ -29,7 +29,7 @@ VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t
   textureBuffer.SetMemory(_imageData, _imageSize);
 
   m_VulkanImage = std::make_unique<VulkanImage>(_imageWidth, _imageHeight, VK_IMAGE_TILING_OPTIMAL,
-                                                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_B8G8R8A8_SRGB);
+                                                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_B8G8R8A8_UNORM);
   m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
   // From buffer to image
@@ -43,7 +43,7 @@ VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t
 VulkanTextureImage::VulkanTextureImage(uint32_t _imageWidth, uint32_t _imageHeight) {
   m_VulkanImage = std::make_unique<VulkanImage>(_imageWidth, _imageHeight, VK_IMAGE_TILING_OPTIMAL,
                                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                                VK_FORMAT_B8G8R8A8_SRGB);
+                                                VK_FORMAT_B8G8R8A8_UNORM);
   m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   m_VulkanImage->TransitionImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -69,7 +69,7 @@ void VulkanTextureImage::Create() {
   viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
   viewInfo.image = *m_VulkanImage;
   viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  viewInfo.format = VK_FORMAT_B8G8R8A8_SRGB;
+  viewInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
   viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   viewInfo.subresourceRange.baseMipLevel = 0;
   viewInfo.subresourceRange.levelCount = 1;

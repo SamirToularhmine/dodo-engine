@@ -63,7 +63,7 @@ void VulkanRenderPass::Begin(const VulkanRenderPassData& _vulkanRenderPassData) 
     renderPassBeginInfo.renderPass = m_VkRenderPass;
     renderPassBeginInfo.framebuffer = _vulkanRenderPassData.m_FrameBuffer;
     renderPassBeginInfo.renderArea.offset = { 0, 0 };
-    renderPassBeginInfo.renderArea.extent = _vulkanRenderPassData.m_SwapChainData.m_VkExtent;
+    renderPassBeginInfo.renderArea.extent = _vulkanRenderPassData.m_FrameSize;
 
     std::array<VkClearValue, 2> clearValues = {
         // {{{0.694f, 0.686f, 1.0f, 1.0f}}, 

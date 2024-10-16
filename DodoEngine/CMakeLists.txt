@@ -63,7 +63,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     imgui 
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG cb16be3a3fc1f9cd146ae24d52b615f8a05fa93d
+    GIT_TAG b0185efd248e5d56a6728da6a4746d5826a14370
 )
 
 # tinygltf
@@ -89,7 +89,7 @@ set(INCLUDE_LIST "src" "vendor" "/usr/local/include" ${imgui_SOURCE_DIR} ${imgui
 file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST} "src/DodoEngine/Renderer/ShaderManager.h" "src/DodoEngine/Renderer/ShaderManager.cpp" "src/DodoEngine/Editor/ProfilerPanel.cpp" "src/DodoEngine/Editor/Editor.h" "src/DodoEngine/Editor/ScenePanel.cpp")
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST})
 target_link_libraries(DodoEngine glfw volk glm VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
