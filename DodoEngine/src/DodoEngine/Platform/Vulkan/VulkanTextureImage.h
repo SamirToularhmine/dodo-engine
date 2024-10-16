@@ -3,8 +3,9 @@
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanImage.h>
 
-#include <vk_mem_alloc.h>
+#define VK_NO_PROTOTYPES
 #include <volk.h>
+#include <vk_mem_alloc.h>
 
 DODO_BEGIN_NAMESPACE
 

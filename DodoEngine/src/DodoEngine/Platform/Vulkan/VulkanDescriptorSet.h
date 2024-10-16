@@ -2,6 +2,7 @@
 
 #include <DodoEngine/Core/Types.h>
 
+#define VK_NO_PROTOTYPES
 #include <volk.h>
 #include <vector>
 
@@ -11,7 +12,7 @@ class VulkanDevice;
 class VulkanDescriptorSetLayout;
 class VulkanDescriptorPool;
 class VulkanBuffer;
-struct VulkanRenderPassData;
+struct RenderPass;
 class Texture;
 
 struct DescriptorUpdate {
@@ -24,14 +25,12 @@ struct DescriptorUpdate {
 class VulkanDescriptorSet {
  public:
   VulkanDescriptorSet(const std::vector<VkDescriptorSetLayout>& _vulkanDescriptorSetLayouts, VulkanDescriptorPool& _vulkanDescriptionPool);
-
   ~VulkanDescriptorSet();
 
-  void UpdateUniformDescriptor(const VulkanBuffer& _buffer, const uint32_t& _frameIndex);
+  void UpdateUniformDescriptor(const VulkanBuffer& _buffer);
+  void UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures);
 
-  void UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures, const uint32_t& _frameIndex);
-
-  void Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer _vkCommandBuffer, const uint32_t& _frameIndex);
+  void Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer& _commandBuffer);
 
   const VkDescriptorSet& GetCurrentDescriptorSet() const;
 

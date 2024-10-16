@@ -3,7 +3,7 @@
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Core/Window.h>
-#include <DodoEngine/Debug/ImGuiLayer.h>
+#include <DodoEngine/Editor/ImGuiLayer.h>
 #include <DodoEngine/Renderer/Renderer.h>
 
 #include <memory>

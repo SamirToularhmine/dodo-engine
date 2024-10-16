@@ -132,6 +132,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanSurface& _vulkanSurface, const Vulk
 }
 
 VulkanSwapChain::~VulkanSwapChain() {
+  DestroyFrameBuffers();
   vkDestroySwapchainKHR(*m_VulkanDevice, m_VkSwapChain, nullptr);
 
   for (uint32_t i = 0; i < m_ImageViews.size(); ++i) {
@@ -139,13 +140,21 @@ VulkanSwapChain::~VulkanSwapChain() {
   }
 }
 
-void VulkanSwapChain::InitFrameBuffers(std::vector<VulkanFrameBuffer>& _frameBuffers, const VulkanRenderPass& _vulkanRenderPass) const {
+void VulkanSwapChain::InitFrameBuffers(const VulkanRenderPass& _renderPass) {
   std::ranges::for_each(std::cbegin(m_ImageViews), std::cend(m_ImageViews), [&](const VkImageView& _imageView) {
     const std::vector<VkImageView> attachments = {_imageView, m_DepthImage->GetImageView()};
     const VkExtent2D frameBufferSize = m_ChosenSwapChainDetails.m_VkExtent;
 
-    _frameBuffers.emplace_back(m_VulkanDevice, _vulkanRenderPass, attachments, frameBufferSize.width, frameBufferSize.height);
+    m_FrameBuffers.emplace_back(std::make_shared<VulkanFrameBuffer>(m_VulkanDevice, _renderPass, attachments, frameBufferSize.width, frameBufferSize.height));
   });
+}
+
+void VulkanSwapChain::DestroyFrameBuffers() {
+  for (uint32_t i = 0; i < m_FrameBuffers.size(); ++i) {
+    vkDestroyFramebuffer(*m_VulkanDevice, *m_FrameBuffers[i], nullptr);
+  }
+
+  m_FrameBuffers.clear();
 }
 
 bool VulkanSwapChain::AcquireNextImage(const VkSemaphore& _semaphore, uint32_t& _imageIndex) const {

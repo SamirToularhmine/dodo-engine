@@ -2,12 +2,14 @@
 
 #include <DodoEngine/Core/Types.h>
 
+#define VK_NO_PROTOTYPES
 #include <volk.h>
 
 #include <vector>
 
 DODO_BEGIN_NAMESPACE
 
+struct RenderPass;
 class VulkanDevice;
 struct VulkanSwapChainData;
 struct VulkanRenderPassData;
@@ -23,8 +25,8 @@ class VulkanRenderPass {
   VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments);
   ~VulkanRenderPass();
 
-  void Begin(const VulkanRenderPassData& _vulkanRenderPassData) const;
-  void End(const VulkanRenderPassData& _vulkanRenderPassData) const;
+  void Begin(const RenderPass& _renderPass) const;
+  void End(const RenderPass& _renderPass) const;
 
   operator const VkRenderPass&() const { return m_VkRenderPass; }
 

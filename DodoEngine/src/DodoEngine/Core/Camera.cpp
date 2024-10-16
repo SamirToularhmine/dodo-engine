@@ -1,8 +1,10 @@
+
 #include <DodoEngine/Core/Camera.h>
 
 #include <DodoEngine/Core/InputManager.h>
 #include <DodoEngine/Core/Key.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Utils.h>
 
 #define _USE_MATH_DEFINES

@@ -2,7 +2,10 @@
 
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
+#include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
+#include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
+#include <DodoEngine/Platform/Vulkan/VulkanRenderer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Log.h>
 
@@ -56,14 +59,16 @@ VulkanRenderPass::~VulkanRenderPass()
     vkDestroyRenderPass(*m_VulkanDevice, m_VkRenderPass, nullptr);
 }
 
-void VulkanRenderPass::Begin(const VulkanRenderPassData& _vulkanRenderPassData) const
+void VulkanRenderPass::Begin(const RenderPass& _renderPass) const
 {
+  const Ref<VulkanFrameBuffer> frameBuffer = _renderPass.m_FrameBuffer;
+
     VkRenderPassBeginInfo renderPassBeginInfo{};
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = m_VkRenderPass;
-    renderPassBeginInfo.framebuffer = _vulkanRenderPassData.m_FrameBuffer;
+    renderPassBeginInfo.framebuffer = *frameBuffer;
     renderPassBeginInfo.renderArea.offset = { 0, 0 };
-    renderPassBeginInfo.renderArea.extent = _vulkanRenderPassData.m_FrameSize;
+    renderPassBeginInfo.renderArea.extent = frameBuffer->GetDimensions();
 
     std::array<VkClearValue, 2> clearValues = {
         // {{{0.694f, 0.686f, 1.0f, 1.0f}}, 
@@ -73,12 +78,11 @@ void VulkanRenderPass::Begin(const VulkanRenderPassData& _vulkanRenderPassData) 
     renderPassBeginInfo.clearValueCount = clearValues.size();
     renderPassBeginInfo.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(_vulkanRenderPassData.m_CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(*_renderPass.m_Frame.m_CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VulkanRenderPass::End(const VulkanRenderPassData& _vulkanRenderPassData) const
-{
-    vkCmdEndRenderPass(_vulkanRenderPassData.m_CommandBuffer);
+void VulkanRenderPass::End(const RenderPass& _renderPass) const {
+  vkCmdEndRenderPass(*_renderPass.m_Frame.m_CommandBuffer);
 }
 
 DODO_END_NAMESPACE

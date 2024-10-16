@@ -75,6 +75,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(glfw volk glm VulkanMemoryAllocator OpenFBX tinyobjloader imgui tinygltf)
 
+if (WIN32)
+   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+endif()
+
+
 set(IMGUI_SOURCE_LIST
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
@@ -90,7 +95,7 @@ file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
 add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST})
-target_link_libraries(DodoEngine glfw volk glm VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
+target_link_libraries(DodoEngine glfw volk glm GPUOpen::VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
 

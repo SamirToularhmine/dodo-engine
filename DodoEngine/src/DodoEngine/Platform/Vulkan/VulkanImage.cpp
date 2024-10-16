@@ -7,6 +7,8 @@
 #include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
 #include <DodoEngine/Utils/Log.h>
 
+#include <vk_mem_alloc.h>
+
 DODO_BEGIN_NAMESPACE
 
 VulkanImage::VulkanImage(uint32_t _imageWidth, uint32_t _imageHeight, VkImageTiling _tiling, uint32_t _usage, uint32_t _featureFlags)

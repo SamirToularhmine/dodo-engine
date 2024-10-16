@@ -31,7 +31,7 @@ void Application::Init(const WindowProps& _windowProps) {
   m_Renderer = std::make_unique<VulkanRenderer>(VulkanContext::Get());
   m_Renderer->Init(*m_Window);
 
-  m_Camera = std::make_unique<Camera>(glm::vec3{0, 0, -2});
+  m_Camera = std::make_unique<Camera>(glm::vec3{0, -2, -2});
 
   m_ImGuiLayer = std::make_unique<ImGuiLayer>();
   m_ImGuiLayer->Init(*m_Window);
@@ -103,13 +103,16 @@ void Application::Run() {
 
       m_Camera->Update(deltaTime);
 
-      // Scene pass
-      { m_Renderer->Update(frameNumber, *m_Camera, Light{lightPos}, deltaTime); }
+      Frame frame = m_Renderer->BeginFrame(frameNumber++);
+      {
+        // Scene pass
+        { m_Renderer->Update(frame, *m_Camera, Light{lightPos}, deltaTime); }
 
-      // UI pass
-      { m_ImGuiLayer->Update(*m_Renderer); }
+        // UI pass
+        { m_ImGuiLayer->Update(frame, *m_Renderer); }
+      }
+      m_Renderer->EndFrame(frame);
 
-      frameNumber++;
       m_Camera->Reset();
       m_Window->SwapBuffers();
     }

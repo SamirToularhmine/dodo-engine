@@ -3,10 +3,13 @@
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Window.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
+#include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
+#include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanGraphicPipeline.h>
+#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Platform/Vulkan/VulkanTextureImage.h>
 #include <DodoEngine/Renderer/Mesh.h>
 #include <DodoEngine/Renderer/MeshTransform.h>
@@ -51,12 +54,11 @@ void VulkanRenderer::Init(const Window& _window) {
   // Creation of the grid pipeline
   {
     const std::vector<VulkanDescriptorSetLayoutSpec> gridPipelineLayoutSpec = {
-        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT}
-    };
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT}};
     Ref<VulkanDescriptorSetLayout> gridDescriptorSetLayout = std::make_shared<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
     const VulkanGraphicPipelineSpecification gridPipelineSpec{.m_VulkanDescriptorSetLayout = gridDescriptorSetLayout,
-                                                          .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/grid.vert.spv"),
-                                                          .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/grid.frag.spv")};
+                                                              .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/grid.vert.spv"),
+                                                              .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/grid.frag.spv")};
 
     m_GridGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(gridPipelineSpec, swapChainData);
     m_GridDescriptorSet = std::make_shared<VulkanDescriptorSet>(m_GridGraphicPipeline->GetDescriptorSetLayout(), *m_VulkanContext.GetDescriptorPool());
@@ -67,23 +69,21 @@ void VulkanRenderer::Init(const Window& _window) {
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
 }
 
-void VulkanRenderer::Update(const uint32_t& _frameNumber, const Camera& _camera, const Light& _light, float _deltaTime) {
+void VulkanRenderer::Update(Frame& _frame, const Camera& _camera, const Light& _light, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
-  BeginRenderPass(_frameNumber);
-
-  VulkanRenderPassData& renderPassData = m_RendererData.m_RenderPassData;
-  const VkCommandBuffer& commandBuffer = renderPassData.m_CommandBuffer;
-  const uint32_t& frameIndex = renderPassData.m_FrameIndex;
+  const RenderPass renderPass = BeginSceneRenderPass(_frame);
+  const VkExtent2D frameSize = renderPass.m_FrameBuffer->GetDimensions();
+  const VkCommandBuffer& commandBuffer = *_frame.m_CommandBuffer;
 
   m_UniformMvp.m_LightPos = _light.m_Position;
-  BatchMvpUbo(_camera, renderPassData.m_SwapChainData, _deltaTime);
+  BatchMvpUbo(_camera, frameSize, _deltaTime);
 
   // Grid
   {
     m_GridGraphicPipeline->Bind(commandBuffer);
-    m_GridDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer, frameIndex);
-    m_GridDescriptorSet->Bind(m_GridGraphicPipeline->GetPipelineLayout(), commandBuffer, frameIndex);
+    m_GridDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer);
+    m_GridDescriptorSet->Bind(m_GridGraphicPipeline->GetPipelineLayout(), commandBuffer);
 
     const Ref<Model>& quadModel = m_RendererData.m_ModelsToDraw[0];
 
@@ -102,9 +102,9 @@ void VulkanRenderer::Update(const uint32_t& _frameNumber, const Camera& _camera,
   {
     m_DefaultGraphicPipeline->Bind(commandBuffer);
 
-    m_DefaultDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer, frameIndex);
-    m_DefaultDescriptorSet->UpdateImageSamplers(m_RendererData.NeededTextures(), frameIndex);
-    m_DefaultDescriptorSet->Bind(m_DefaultGraphicPipeline->GetPipelineLayout(), commandBuffer, frameIndex);
+    m_DefaultDescriptorSet->UpdateUniformDescriptor(*m_UniformBuffer);
+    m_DefaultDescriptorSet->UpdateImageSamplers(m_RendererData.NeededTextures());
+    m_DefaultDescriptorSet->Bind(m_DefaultGraphicPipeline->GetPipelineLayout(), commandBuffer);
 
     uint32_t modelId = 0;
 
@@ -139,7 +139,7 @@ void VulkanRenderer::Update(const uint32_t& _frameNumber, const Camera& _camera,
     }
   }
 
-  EndRenderPass();
+  EndSceneRenderPass(renderPass);
 }
 
 void VulkanRenderer::Shutdown() {
@@ -150,33 +150,59 @@ void VulkanRenderer::Shutdown() {
   m_VulkanContext.Shutdown();
 }
 
-void VulkanRenderer::BeginRenderPass(const uint32_t& _frameNumber) {
+RenderPass VulkanRenderer::BeginSceneRenderPass(Frame& _frame) {
   DODO_TRACE(VulkanRenderer);
 
-  m_RendererData.m_RenderPassData = {_frameNumber};
-  m_VulkanContext.BeginRenderPass(m_RendererData.m_RenderPassData);
+  RenderPass renderPass{_frame};
+  m_VulkanContext.BeginSceneRenderPass(renderPass);
+
+  return renderPass;
 }
 
-void VulkanRenderer::EndRenderPass() {
+void VulkanRenderer::EndSceneRenderPass(const RenderPass& _renderPass) {
   DODO_TRACE(VulkanRenderer);
-  
-  m_VulkanContext.EndRenderPass(m_RendererData.m_RenderPassData);
+
+  m_VulkanContext.EndSceneRenderPass(_renderPass);
 
   m_GridDescriptorSet->Reset();
   m_DefaultDescriptorSet->Reset();
   m_RendererData.ResetTransforms();
 }
 
-bool VulkanRenderer::BeginUIRenderPass() {
+RenderPass VulkanRenderer::BeginUIRenderPass(Frame& _frame) {
   DODO_TRACE(VulkanRenderer);
-  
-  return m_VulkanContext.BeginUIRenderPass(m_RendererData.m_RenderPassData);
+
+  RenderPass renderPass{_frame};
+  m_VulkanContext.BeginUIRenderPass(renderPass);
+
+  return renderPass;
 }
 
-void VulkanRenderer::EndUIRenderPass() {
+void VulkanRenderer::EndUIRenderPass(const RenderPass& _renderPass) {
   DODO_TRACE(VulkanRenderer);
 
-  m_VulkanContext.EndUIRenderPass(m_RendererData.m_RenderPassData);
+  m_VulkanContext.EndUIRenderPass(_renderPass);
+}
+
+Frame VulkanRenderer::BeginFrame(const uint32_t& _frameNumber) {
+  vkDeviceWaitIdle(*m_VulkanContext.GetVulkanDevice());
+
+  const Ref<VulkanCommandBuffer> commandBuffer = m_VulkanContext.GetCommandBuffer(_frameNumber);
+  commandBuffer->BeginRecording();
+
+  return {.m_FrameNumber = _frameNumber, .m_CommandBuffer = commandBuffer};
+}
+
+void VulkanRenderer::EndFrame(const Frame& _frame) {
+  Ref<VulkanCommandBuffer> commandBuffer = _frame.m_CommandBuffer;
+  commandBuffer->EndRecording();
+
+  if (_frame.m_Error) {
+    return;
+  }
+
+  m_VulkanContext.SubmitQueue(_frame);
+  m_VulkanContext.PresentQueue(_frame);
 }
 
 void VulkanRenderer::RegisterModel(Ref<Model>& _model) {
@@ -209,15 +235,12 @@ void VulkanRenderer::DrawModel(Ref<Model>& _model, const MeshTransform& _meshTra
   m_RendererData.m_ModelsTransform[modelId].push_back(modelMatrix);
 }
 
-uint32_t VulkanRenderer::GetFrameIndex() const {
-  return m_RendererData.m_RenderPassData.m_FrameIndex;
-}
-
-std::vector<UniformBufferObject> VulkanRenderer::BatchMvpUbo(const Camera& _camera, const VulkanSwapChainData& _vulkanSwapChainData, float _deltaTime) {
+// TODO: refacto
+std::vector<UniformBufferObject> VulkanRenderer::BatchMvpUbo(const Camera& _camera, const VkExtent2D& _frameDimensions, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
   std::vector<UniformBufferObject> batchUbo;
-  const VkExtent2D extent = _vulkanSwapChainData.m_VkExtent;
+  const VkExtent2D extent = _frameDimensions;
   uint32_t lastTransform = 0;
   for (const auto& [modelId, transforms] : m_RendererData.m_ModelsTransform) {
     for (int i = 0; i < transforms.size(); ++i) {

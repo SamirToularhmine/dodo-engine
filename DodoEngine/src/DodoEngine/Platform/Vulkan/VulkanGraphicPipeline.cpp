@@ -12,14 +12,12 @@
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
 
-#include <vector>
-
 DODO_BEGIN_NAMESPACE
 
 VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecification& _vulkanPipelineSpec, const VulkanSwapChainData& _swapChainData)
-    : m_VulkanDescriptorSetLayout(std::move(_vulkanPipelineSpec.m_VulkanDescriptorSetLayout)) {
+    : m_DescriptorSetLayout(std::move(_vulkanPipelineSpec.m_VulkanDescriptorSetLayout)) {
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
-  const Ref<VulkanRenderPass>& vulkanRenderPass = VulkanContext::Get().GetRenderPass();
+  const Ref<VulkanRenderPass>& vulkanRenderPass = VulkanContext::Get().GetSceneRenderPass();
 
   // Loading default shader
   m_VertexShaderModule = _vulkanPipelineSpec.m_VertexShaderModule;
@@ -131,7 +129,7 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecific
   pushConstantCreateInfo.size = sizeof(RendererPushConstants);
   pushConstantCreateInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-  VkDescriptorSetLayout descriptorSetLayouts[] = {*m_VulkanDescriptorSetLayout};
+  VkDescriptorSetLayout descriptorSetLayouts[] = {*m_DescriptorSetLayout};
   VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
   pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipelineLayoutCreateInfo.setLayoutCount = 1;
@@ -139,7 +137,7 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecific
   pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
   pipelineLayoutCreateInfo.pPushConstantRanges = &pushConstantCreateInfo;
 
-  VkResult pipeLayoutCreateResult = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, nullptr, &m_VkPipelineLayout);
+  VkResult pipeLayoutCreateResult = vkCreatePipelineLayout(vkDevice, &pipelineLayoutCreateInfo, nullptr, &m_PipelineLayout);
   if (pipeLayoutCreateResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not create pipeline layout");
   }
@@ -165,28 +163,28 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecific
   graphicsPipelineCreateInfo.pMultisampleState = &multisampleCreateInfo;
   graphicsPipelineCreateInfo.pColorBlendState = &colorBlendStateCreateInfo;
   graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-  graphicsPipelineCreateInfo.layout = m_VkPipelineLayout;
+  graphicsPipelineCreateInfo.layout = m_PipelineLayout;
   graphicsPipelineCreateInfo.renderPass = *vulkanRenderPass;
   graphicsPipelineCreateInfo.subpass = 0;
   graphicsPipelineCreateInfo.pDepthStencilState = &depthStencil;
 
-  VkResult graphicsPipelineCreateResult = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_VkPipeline);
+  VkResult graphicsPipelineCreateResult = vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, 1, &graphicsPipelineCreateInfo, nullptr, &m_Pipeline);
   if (graphicsPipelineCreateResult != VK_SUCCESS) {
     DODO_CRITICAL("Could not create graphics pipeline");
   }
 
-  m_VkDescriptorSetLayouts.resize(VulkanContext::MAX_FRAMES_IN_FLIGHT, *m_VulkanDescriptorSetLayout);
+  m_DescriptorSetLayouts.resize(VulkanContext::MAX_FRAMES_IN_FLIGHT, *m_DescriptorSetLayout);
 }
 
 VulkanGraphicPipeline::~VulkanGraphicPipeline() {
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
 
-  vkDestroyPipelineLayout(vkDevice, m_VkPipelineLayout, nullptr);
-  vkDestroyPipeline(vkDevice, m_VkPipeline, nullptr);
+  vkDestroyPipelineLayout(vkDevice, m_PipelineLayout, nullptr);
+  vkDestroyPipeline(vkDevice, m_Pipeline, nullptr);
 }
 
 void VulkanGraphicPipeline::Bind(const VkCommandBuffer& _vkCommandBuffer) const {
-  vkCmdBindPipeline(_vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_VkPipeline);
+  vkCmdBindPipeline(_vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
 
   vkCmdSetViewport(_vkCommandBuffer, 0, 1, &m_Viewport);
   vkCmdSetScissor(_vkCommandBuffer, 0, 1, &m_Scissor);

@@ -2,6 +2,7 @@
 
 #include <DodoEngine/Core/Types.h>
 
+#define VK_NO_PROTOTYPES
 #include <volk.h>
 
 #include <vector>

@@ -10,7 +10,8 @@ DODO_BEGIN_NAMESPACE
 
 VulkanFrameBuffer::VulkanFrameBuffer(Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPass& _vulkanRenderPass, const std::vector<VkImageView>& _attachments,
                                      const uint32_t& _width, const uint32_t& _height)
-    : m_VulkanDevice(_vulkanDevice) {
+    : m_Dimensions({_width, _height}), m_VulkanDevice(_vulkanDevice) {
+
   VkFramebufferCreateInfo framebufferCreateInfo{};
   framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
   framebufferCreateInfo.renderPass = _vulkanRenderPass;

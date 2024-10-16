@@ -1,49 +1,36 @@
 #pragma once
 
-#include <DodoEngine/Platform/Vulkan/VulkanDepthImage.h>
 #include <DodoEngine/Core/GraphicContext.h>
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanFrameBuffer.h>
-#include <DodoEngine/Platform/Vulkan/VulkanSwapChain.h>
 #include <DodoEngine/Utils/Utils.h>
 
-#include <vk_mem_alloc.h>
+#define VK_NO_PROTOTYPES
 #include <volk.h>
+#include <vk_mem_alloc.h>
 
 #include <vector>
 
 DODO_BEGIN_NAMESPACE
 
-class VulkanInstance;
-class VulkanSurface;
-class VulkanPhysicalDevice;
-class VulkanDevice;
-class VulkanSwapChain;
-class VulkanRenderPass;
-class VulkanGraphicPipeline;
+struct Frame;
+struct RenderPass;
+class VulkanCommandBuffer;
+class VulkanDepthImage;
 class VulkanDescriptorPool;
 class VulkanDescriptorSet;
 class VulkanDescriptorSetLayout;
+class VulkanDevice;
+class VulkanFrameBuffer;
+class VulkanInstance;
+class VulkanGraphicPipeline;
+class VulkanPhysicalDevice;
+class VulkanRenderPass;
+class VulkanSurface;
+class VulkanSwapChain;
+class VulkanTextureImage;
 struct VulkanSwapChainData;
 
-struct VulkanRenderPassData {
-  uint32_t m_FrameCount;
-  uint32_t m_ImageIndex{0};
-  uint32_t m_FrameIndex{0};
-  VkCommandBuffer m_CommandBuffer;
-  VkFramebuffer m_FrameBuffer;
-  VulkanSwapChainData m_SwapChainData;
-  VkPipelineLayout m_PipelineLayout;
-  Ref<VulkanDescriptorSet> m_DescriptorSet;
-  VkExtent2D m_FrameSize;
-  bool m_RenderPassStarted{false};
-
-  VulkanRenderPassData(uint32_t _frameCount) : m_FrameCount(_frameCount) {}
-};
-
 class VulkanContext : public GraphicContext {
-  using FrameBuffers = std::vector<VulkanFrameBuffer>;
-
  public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -54,62 +41,59 @@ class VulkanContext : public GraphicContext {
 
   void Shutdown() override;
 
+  void BeginSceneRenderPass(RenderPass& _renderPass) const;
+  void EndSceneRenderPass(const RenderPass& _renderPass) const;
 
-  void BeginRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
-  void EndRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
-
-  bool BeginUIRenderPass(VulkanRenderPassData& _vulkanRenderPassData);
-  void EndUIRenderPass(const VulkanRenderPassData& _vulkanRenderPassData);
+  void BeginUIRenderPass(RenderPass& _renderPass);
+  void EndUIRenderPass(const RenderPass& _renderPass) const;
 
   void RescaleOffscreenTextureImage(uint32_t _width, uint32_t _height);
+  void RecreateSwapChain(const uint32_t& _frameIndex, RenderPass& _renderPass);
 
-  const Ref<VulkanDevice>& GetVulkanDevice() const { return m_VulkanDevice; }
-  const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_VulkanPhysicalDevice; }
+  const Ref<VulkanDevice>& GetVulkanDevice() const { return m_Device; }
+  const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_PhysicalDevice; }
   const VmaAllocator& GetAllocator() const { return m_VmaAllocator; }
-  const VkCommandPool& GetCommandPool() const { return m_VkCommandPool; }
-  const Ref<VulkanInstance> GetInstance() const { return m_VulkanInstance; }
-  const Ref<VulkanSwapChain> GetSwapChain() const { return m_VulkanSwapChain; }
-  const Ref<VulkanDescriptorPool> GetDescriptorPool() const { return m_VulkanDescriptorPool; }
-  const VkCommandBuffer& GetCommandBuffer(uint32_t _frameIndex) const { return m_VkCommandBuffers[_frameIndex]; }
-  const Ref<VulkanRenderPass>& GetRenderPass() const { return m_VulkanRenderPass; }
-  const VulkanTextureImage& GetOffScreenTextureImage() const { return *m_OffScreenTextureImage; }
+  const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
+  const Ref<VulkanInstance> GetInstance() const { return m_Instance; }
+  const Ref<VulkanSwapChain> GetSwapChain() const { return m_SwapChain; }
+  const Ref<VulkanDescriptorPool> GetDescriptorPool() const { return m_DescriptorPool; }
+  const Ref<VulkanRenderPass> GetSceneRenderPass() const { return m_SceneRenderPass; }
+  const Ref<VulkanRenderPass> GetUiRenderPass() const { return m_UiRenderPass; }
+  const Ref<VulkanCommandBuffer>& GetCommandBuffer(const uint32_t& _frameNumber) const { return m_CommandBuffers[_frameNumber % MAX_FRAMES_IN_FLIGHT]; }
+  const Ref<VulkanTextureImage>& GetOffScreenTextureImage() const { return m_OffScreenTextureImage; }
   
+  void SubmitQueue(const Frame& _frame);
+  void PresentQueue(const Frame& _frame);
+
   static VulkanContext& Get() {
     static VulkanContext instance;
     return instance;
   }
 
  private:
-  void BeginCommandBuffer(VulkanRenderPassData& _vulkanRenderPassData);
-  void EndCommandBuffer(uint32_t _frameIndex);
-  void SubmitQueue(uint32_t _frameIndex) const;
-  void PresentQueue(const VulkanRenderPassData& _vulkanRenderPassData);
-  void DestroyFrameBuffers();
-
- private:
-  Ref<VulkanInstance> m_VulkanInstance;
-  Ref<VulkanSurface> m_VulkanSurface;
-  Ref<VulkanPhysicalDevice> m_VulkanPhysicalDevice;
-  Ref<VulkanDevice> m_VulkanDevice;
-  Ref<VulkanSwapChain> m_VulkanSwapChain;
-  Ref<VulkanRenderPass> m_VulkanRenderPass;
-  Ref<VulkanDescriptorPool> m_VulkanDescriptorPool;
+  GLFWwindow* m_NativeWindow;
 
   VmaAllocator m_VmaAllocator;
 
-  GLFWwindow* m_NativeWindow;
-  FrameBuffers m_VkFramebuffers;
-  VkCommandPool m_VkCommandPool;
-  std::vector<VkCommandBuffer> m_VkCommandBuffers;
-  std::vector<VkSemaphore> m_VkImagesAvailable;
-  std::vector<VkSemaphore> m_VkRenderFinishedSemaphores;
-  std::vector<VkFence> m_VkInFlightFences;
+  Ref<VulkanInstance> m_Instance;
+  Ref<VulkanSurface> m_Surface;
+  Ref<VulkanPhysicalDevice> m_PhysicalDevice;
+  Ref<VulkanDevice> m_Device;
+  Ref<VulkanSwapChain> m_SwapChain;
+  Ref<VulkanDescriptorPool> m_DescriptorPool;
+  Ref<VulkanFrameBuffer> m_OffScreenFrameBuffer;
+  Ref<VulkanRenderPass> m_SceneRenderPass;
+  Ref<VulkanRenderPass> m_UiRenderPass;
+  Ref<VulkanTextureImage> m_OffScreenTextureImage;
+  
+  Ref<VulkanDepthImage> m_DepthImage;
 
+  VkCommandPool m_CommandPool;
 
-  Ptr<VulkanFrameBuffer> m_OffScreenFrameBuffer;
-  Ptr<VulkanDepthImage> m_DepthImage;
-  Ptr<VulkanTextureImage> m_OffScreenTextureImage;
-  Ref<VulkanRenderPass> m_OffScreenRenderPass;
+  std::vector<Ref<VulkanCommandBuffer>> m_CommandBuffers;
+  std::vector<VkSemaphore> m_ImagesAvailableSemaphores;
+  std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+  std::vector<VkFence> m_InFlightFences;
 };
 
 DODO_END_NAMESPACE

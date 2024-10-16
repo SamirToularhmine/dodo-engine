@@ -3,21 +3,21 @@
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanImage.h>
 
+#define VK_NO_PROTOTYPES
 #include <volk.h>
 #include <vk_mem_alloc.h>
 
 DODO_BEGIN_NAMESPACE
 
 class VulkanDevice;
+class VulkanImage;
 
 class VulkanDepthImage {
  public:
   VulkanDepthImage(uint32_t _imageWidth, uint32_t _imageHeight);
-
   ~VulkanDepthImage();
 
   const VkImageView& GetImageView() const { return m_ImageView; }
-
   VkFormat GetFormat() const { return m_VulkanImage->GetFormat(); }
 
   operator const VkImage&() const { return *m_VulkanImage; }

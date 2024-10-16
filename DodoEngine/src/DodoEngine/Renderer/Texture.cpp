@@ -11,8 +11,9 @@
 #include <memory>
 
 #include <stb_image/stb_image.h>
-#include <vk_mem_alloc.h>
+#define VK_NO_PROTOTYPES
 #include <volk.h>
+#include <vk_mem_alloc.h>
 
 DODO_BEGIN_NAMESPACE
 

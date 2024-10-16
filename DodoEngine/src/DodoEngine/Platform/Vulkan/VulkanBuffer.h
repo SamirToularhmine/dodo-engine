@@ -3,6 +3,7 @@
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 
+#define VK_NO_PROTOTYPES
 #include <volk.h>
 #include <vk_mem_alloc.h>
 

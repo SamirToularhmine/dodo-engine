@@ -1,6 +1,8 @@
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
 
+#include <DodoEngine/Platform/VUlkan/VulkanRenderer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
+#include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
@@ -30,7 +32,7 @@ VulkanDescriptorSet::VulkanDescriptorSet(const std::vector<VkDescriptorSetLayout
   }
 }
 
-void VulkanDescriptorSet::UpdateUniformDescriptor(const VulkanBuffer& _buffer, const uint32_t& _frameIndex) {
+void VulkanDescriptorSet::UpdateUniformDescriptor(const VulkanBuffer& _buffer) {
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
 
   VkDescriptorBufferInfo bufferInfo{};
@@ -44,7 +46,7 @@ void VulkanDescriptorSet::UpdateUniformDescriptor(const VulkanBuffer& _buffer, c
   descriptorUpdate.m_DescriptorBufferInfo.push_back(bufferInfo);
 }
 
-void VulkanDescriptorSet::UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures, const uint32_t& _frameIndex) {
+void VulkanDescriptorSet::UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures) {
   DODO_TRACE(VulkanDescriptorSet);
 
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
@@ -66,7 +68,7 @@ void VulkanDescriptorSet::UpdateImageSamplers(const std::vector<Ref<Texture>>& _
   }
 }
 
-void VulkanDescriptorSet::Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer _vkCommandBuffer,  const uint32_t& _frameIndex) {
+void VulkanDescriptorSet::Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer& _commandBuffer) {
   DODO_TRACE(VulkanDescriptorSet);
 
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
@@ -77,7 +79,7 @@ void VulkanDescriptorSet::Bind(const VkPipelineLayout& _vkPipelineLayout, const 
 
     VkWriteDescriptorSet bufferDescriptorWrite{};
     bufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    bufferDescriptorWrite.dstSet = m_VkDescriptorSets[_frameIndex];
+    bufferDescriptorWrite.dstSet = GetCurrentDescriptorSet();
     bufferDescriptorWrite.dstBinding = i;
     bufferDescriptorWrite.dstArrayElement = 0;
     bufferDescriptorWrite.descriptorCount = descriptorUpdate.m_Count;
@@ -94,8 +96,7 @@ void VulkanDescriptorSet::Bind(const VkPipelineLayout& _vkPipelineLayout, const 
 
   vkUpdateDescriptorSets(vkDevice, writeDescriptorSet.size(), writeDescriptorSet.data(), 0, nullptr);
 
-  vkCmdBindDescriptorSets(_vkCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _vkPipelineLayout, 0, 1,
-                          &m_VkDescriptorSets[_frameIndex], 0, nullptr);
+  vkCmdBindDescriptorSets(_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, _vkPipelineLayout, 0, 1, &GetCurrentDescriptorSet(), 0, nullptr);
 }
 
 VkDescriptorSet const& VulkanDescriptorSet::GetCurrentDescriptorSet() const {

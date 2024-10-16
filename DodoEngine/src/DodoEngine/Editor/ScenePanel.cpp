@@ -2,6 +2,10 @@
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
+#include <DodoEngine/Platform/Vulkan/VulkanTextureImage.h>
+
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -17,7 +21,7 @@ static bool s_WindowResized = false;
 
 static void InitScenePanel() {
   VulkanContext& vulkanContext = VulkanContext::Get();
-  const VulkanTextureImage& viewportTextureImage = vulkanContext.GetOffScreenTextureImage();
+  const VulkanTextureImage& viewportTextureImage = *vulkanContext.GetOffScreenTextureImage();
 
   s_ImguiDescriptorSet =
       ImGui_ImplVulkan_AddTexture(viewportTextureImage.GetSampler(), viewportTextureImage.GetImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

@@ -1,7 +1,4 @@
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Platform/Vulkan/VulkanContext.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
-#include <DodoEngine/Platform/Vulkan/VulkanDescriptorSetLayout.h>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -13,8 +10,14 @@ static bool SCENE_OBJECTS_PANEL_OPENED = true;
 
 static void ShowSceneObjectsPanel() {
 
-  // Show scene panel
+  // Show scene objects panel
   ImGui::Begin("Scene objects");
+  {
+    ImGui::BeginChild("Scrolling");
+    for (int n = 0; n < 50; n++)
+      ImGui::Text("%04d: Some text", n);
+    ImGui::EndChild();
+  }
   ImGui::End();
 }
 }  // namespace editor

@@ -1,8 +1,9 @@
-#include <DodoEngine/Debug/ImGuiLayer.h>
+#include <DodoEngine/Editor/ImGuiLayer.h>
 
 #include <DodoEngine/Core/Window.h>
 #include <DodoEngine/Debug/PerformanceManager.h>
 #include <DodoEngine/Editor/Editor.h>
+#include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
@@ -10,6 +11,7 @@
 #include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
 #include <DodoEngine/Platform/Vulkan/VulkanRenderPass.h>
 #include <DodoEngine/Platform/Vulkan/VulkanRenderer.h>
+#include <DodoEngine/Renderer/Renderer.h>
 
 #include <imgui.h>
 
@@ -37,7 +39,7 @@ void ImGuiLayer::Init(const Window& _window) const {
   vulkanInitInfo.QueueFamily = vulkanPhysicalDevice->GetQueues().m_QueueFamilyIndices.graphicsFamily.value();
   vulkanInitInfo.Queue = vulkanDevice->GetQueues().m_GraphicsFamilyQueue;
   vulkanInitInfo.DescriptorPool = *vulkanContext.GetDescriptorPool();
-  vulkanInitInfo.RenderPass = *vulkanContext.GetRenderPass();
+  vulkanInitInfo.RenderPass = *vulkanContext.GetUiRenderPass();
   vulkanInitInfo.Subpass = 0;
   vulkanInitInfo.MinImageCount = VulkanContext::MAX_FRAMES_IN_FLIGHT;
   vulkanInitInfo.ImageCount = VulkanContext::MAX_FRAMES_IN_FLIGHT;
@@ -51,7 +53,7 @@ void ImGuiLayer::Init(const Window& _window) const {
   editor::InitScenePanel();
 }
 
-void ImGuiLayer::Update(Renderer& _renderer) const {
+void ImGuiLayer::Update(Frame& _frame, Renderer& _renderer) const {
   const VulkanContext& vulkanContext = VulkanContext::Get();
 
   if (editor::s_WindowResized) {
@@ -60,7 +62,9 @@ void ImGuiLayer::Update(Renderer& _renderer) const {
     editor::s_WindowResized = false;
   }
 
-  if (!_renderer.BeginUIRenderPass()) {
+  const RenderPass renderPass = _renderer.BeginUIRenderPass(_frame);
+
+  if (renderPass.m_Frame.m_Error) {
     return;
   }
 
@@ -74,17 +78,19 @@ void ImGuiLayer::Update(Renderer& _renderer) const {
 
     // Show editor
     {
+      editor::ShowConsole();
       editor::ShowProfilerPanel();
       editor::ShowScenePanel();
+      editor::ShowSceneObjectsPanel();
     }
 
     ImGui::ShowDemoWindow();
 
     ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vulkanContext.GetCommandBuffer(_renderer.GetFrameIndex()));
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *_frame.m_CommandBuffer);
   }
 
-  _renderer.EndUIRenderPass();
+  _renderer.EndUIRenderPass(renderPass);
 
   PerformanceManager::Clear();
 }

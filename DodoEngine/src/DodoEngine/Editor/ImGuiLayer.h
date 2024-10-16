@@ -8,6 +8,7 @@
 
 DODO_BEGIN_NAMESPACE
 
+struct Frame;
 class Renderer;
 class Window;
 
@@ -18,7 +19,7 @@ class ImGuiLayer {
   ~ImGuiLayer() = default;
 
   void Init(const Window& _window) const;
-  void Update(Renderer& _renderer) const;
+  void Update(Frame& _frame, Renderer& _renderer) const;
   void Shutdown() const;
 };
 
