@@ -73,7 +73,21 @@ FetchContent_Declare(
     GIT_TAG fea67861296293e33e6caee81682261a2700136a
 )
 
-FetchContent_MakeAvailable(glfw volk glm VulkanMemoryAllocator OpenFBX tinyobjloader imgui tinygltf)
+# entt
+FetchContent_Declare(
+    entt 
+    GIT_REPOSITORY https://github.com/skypjack/entt.git
+    GIT_TAG 78213075654a688e9da6bc49f7f873d25c26d12c
+)
+
+# imguizmo
+FetchContent_Declare(
+    imguizmo
+    GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
+    GIT_TAG 6d588209f99b1324a608783d1f52faa518886c29
+)
+
+FetchContent_MakeAvailable(glfw volk glm VulkanMemoryAllocator OpenFBX tinyobjloader imgui tinygltf entt imguizmo)
 
 if (WIN32)
    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
@@ -88,14 +102,25 @@ set(IMGUI_SOURCE_LIST
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+
+    ${imguizmo_SOURCE_DIR}/ImGuizmo.h
+    ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp
+    ${imguizmo_SOURCE_DIR}/ImSequencer.cpp
+    ${imguizmo_SOURCE_DIR}/ImSequencer.h
+    ${imguizmo_SOURCE_DIR}/ImGradient.h
+    ${imguizmo_SOURCE_DIR}/ImGradient.cpp
+    ${imguizmo_SOURCE_DIR}/ImCurveEdit.h
+    ${imguizmo_SOURCE_DIR}/ImCurveEdit.cpp
+    ${imguizmo_SOURCE_DIR}/GraphEditor.h
+    ${imguizmo_SOURCE_DIR}/GraphEditor.cpp
 )
 
-set(INCLUDE_LIST "src" "vendor" "/usr/local/include" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
+set(INCLUDE_LIST "src" "vendor" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends ${imguizmo_SOURCE_DIR})
 file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
 add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST})
-target_link_libraries(DodoEngine glfw volk glm GPUOpen::VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf)
+target_link_libraries(DodoEngine glfw volk glm GPUOpen::VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf EnTT::EnTT)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})
 

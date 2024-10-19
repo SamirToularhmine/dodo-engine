@@ -8,19 +8,26 @@
 
 DODO_BEGIN_NAMESPACE
 
+class Camera;
 struct Frame;
 class Renderer;
+class Scene;
 class Window;
 
-class ImGuiLayer {
+class EditorLayer {
  public:
-  ImGuiLayer() = default;
+  EditorLayer() = default;
 
-  ~ImGuiLayer() = default;
+  ~EditorLayer() = default;
 
   void Init(const Window& _window) const;
-  void Update(Frame& _frame, Renderer& _renderer) const;
+  void Update(Frame& _frame, const Camera& _camera, Renderer& _renderer) const;
   void Shutdown() const;
+
+  void LoadScene(Ref<Scene>& _scene);
+
+ private:
+  Ref<Scene> m_Scene;
 };
 
 DODO_END_NAMESPACE

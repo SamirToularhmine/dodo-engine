@@ -1,8 +1,9 @@
-#include <DodoEngine/Editor/ImGuiLayer.h>
+#include <DodoEngine/Editor/EditorLayer.h>
 
 #include <DodoEngine/Core/Window.h>
 #include <DodoEngine/Debug/PerformanceManager.h>
 #include <DodoEngine/Editor/Editor.h>
+#include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorPool.h>
@@ -14,10 +15,11 @@
 #include <DodoEngine/Renderer/Renderer.h>
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 
 DODO_BEGIN_NAMESPACE
 
-void ImGuiLayer::Init(const Window& _window) const {
+void EditorLayer::Init(const Window& _window) const {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -53,8 +55,8 @@ void ImGuiLayer::Init(const Window& _window) const {
   editor::InitScenePanel();
 }
 
-void ImGuiLayer::Update(Frame& _frame, Renderer& _renderer) const {
-  const VulkanContext& vulkanContext = VulkanContext::Get();
+void EditorLayer::Update(Frame& _frame, const Camera& _camera, Renderer& _renderer) const {
+  Scene& scene = *m_Scene;
 
   if (editor::s_WindowResized) {
     VulkanContext& vulkanContext = VulkanContext::Get();
@@ -73,15 +75,15 @@ void ImGuiLayer::Update(Frame& _frame, Renderer& _renderer) const {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
+    ImGuizmo::BeginFrame();
     ImGui::DockSpaceOverViewport(ImGuiDockNodeFlags_PassthruCentralNode);
 
     // Show editor
     {
       editor::ShowConsole();
       editor::ShowProfilerPanel();
-      editor::ShowScenePanel();
-      editor::ShowSceneObjectsPanel();
+      editor::ShowScenePanel(scene, _camera);
+      editor::ShowSceneObjectsPanel(scene);
     }
 
     ImGui::ShowDemoWindow();
@@ -95,13 +97,17 @@ void ImGuiLayer::Update(Frame& _frame, Renderer& _renderer) const {
   PerformanceManager::Clear();
 }
 
-void ImGuiLayer::Shutdown() const {
+void EditorLayer::Shutdown() const {
   const VulkanContext& vulkanContext = VulkanContext::Get();
   vkDeviceWaitIdle(*vulkanContext.GetVulkanDevice());
 
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+}
+
+void EditorLayer::LoadScene(Ref<Scene>& _scene) {
+  m_Scene = _scene;
 }
 
 DODO_END_NAMESPACE

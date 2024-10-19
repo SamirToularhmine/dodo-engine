@@ -2,6 +2,8 @@
 
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Window.h>
+#include <DodoEngine/Editor/Component.h>
+#include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
@@ -67,16 +69,34 @@ void VulkanRenderer::Init(const Window& _window) {
   // Uniform buffer
   m_UniformBuffer = std::make_shared<VulkanBuffer>(
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
+
+  // Adding the quad model as default
+  std::vector<Ref<Mesh>> quadMeshes = {Mesh::Create(QUAD_VERTICES, QUAD_INDICES)};
+  Ref<Model> quadModel = std::make_shared<Model>(quadMeshes);
+  m_RendererData.m_ModelsToDraw[quadModel->m_Id] = quadModel;
 }
 
-void VulkanRenderer::Update(Frame& _frame, const Camera& _camera, const Light& _light, float _deltaTime) {
+void VulkanRenderer::Update(Frame& _frame, const Scene& _scene, Camera& _camera, const Light& _light, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
   const RenderPass renderPass = BeginSceneRenderPass(_frame);
   const VkExtent2D frameSize = renderPass.m_FrameBuffer->GetDimensions();
   const VkCommandBuffer& commandBuffer = *_frame.m_CommandBuffer;
 
+  _camera.UpdateProjectionMatrix({frameSize.width, frameSize.height});
+
+  // Retrieve all entities with a light component : to do
   m_UniformMvp.m_LightPos = _light.m_Position;
+
+  _scene.ForAll<MeshComponent, TransformComponent>().each([&](const MeshComponent& _meshComponent, const TransformComponent& _transformComponent) {
+    const Ref<Model>& model = _meshComponent.m_Model;
+    m_RendererData.m_ModelsTransform[model->m_Id].push_back(_transformComponent.m_TransformMatrix);
+
+    std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes),
+                  [&](const Ref<Mesh>& _mesh) { m_RendererData.m_ModelsTexture[model->m_Id] = _mesh->m_Texture; });
+  });
+
+  // To refacto
   BatchMvpUbo(_camera, frameSize, _deltaTime);
 
   // Grid
@@ -108,9 +128,10 @@ void VulkanRenderer::Update(Frame& _frame, const Camera& _camera, const Light& _
 
     uint32_t modelId = 0;
 
-    // Draw Meshes
-    for (const auto& [id, model] : m_RendererData.m_ModelsToDraw) {
-      const uint32_t instanceCount = m_RendererData.m_ModelsTransform[id].size();
+    // Retrieve entities with meshes
+    _scene.ForAll<MeshComponent>().each([&](const MeshComponent& _meshComponent) {
+      const Ref<Model> model = _meshComponent.m_Model;
+      const uint32_t instanceCount = m_RendererData.m_ModelsTransform[model->m_Id].size();
 
       std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes), [&](const Ref<Mesh>& _mesh) {
         const Ref<Texture>& texture = _mesh->m_Texture;
@@ -136,17 +157,21 @@ void VulkanRenderer::Update(Frame& _frame, const Camera& _camera, const Light& _
       });
 
       modelId += instanceCount;
-    }
+    });
   }
 
   EndSceneRenderPass(renderPass);
 }
 
 void VulkanRenderer::Shutdown() {
+  DODO_TRACE(VulkanRenderer);
+
   m_RendererData.Clear();
   m_UniformBuffer.reset();
   ShaderManager::Shutdown();
   TextureManager::Shutdown();
+  m_GridGraphicPipeline.reset();
+  m_DefaultGraphicPipeline.reset();
   m_VulkanContext.Shutdown();
 }
 
@@ -185,6 +210,8 @@ void VulkanRenderer::EndUIRenderPass(const RenderPass& _renderPass) {
 }
 
 Frame VulkanRenderer::BeginFrame(const uint32_t& _frameNumber) {
+  DODO_TRACE(VulkanRenderer);
+
   vkDeviceWaitIdle(*m_VulkanContext.GetVulkanDevice());
 
   const Ref<VulkanCommandBuffer> commandBuffer = m_VulkanContext.GetCommandBuffer(_frameNumber);
@@ -194,6 +221,8 @@ Frame VulkanRenderer::BeginFrame(const uint32_t& _frameNumber) {
 }
 
 void VulkanRenderer::EndFrame(const Frame& _frame) {
+  DODO_TRACE(VulkanRenderer);
+
   Ref<VulkanCommandBuffer> commandBuffer = _frame.m_CommandBuffer;
   commandBuffer->EndRecording();
 
@@ -205,51 +234,22 @@ void VulkanRenderer::EndFrame(const Frame& _frame) {
   m_VulkanContext.PresentQueue(_frame);
 }
 
-void VulkanRenderer::RegisterModel(Ref<Model>& _model) {
-  m_RendererData.m_ModelsToDraw[_model->m_Id] = _model;
-
-  for (const auto& _mesh : _model->m_Meshes) {
-    Ref<Texture> meshTexture = _mesh->m_Texture;
-    const TextureId& textureId = meshTexture->GetId();
-    if (!m_RendererData.m_ModelsTexture.contains(textureId)) {
-      m_RendererData.m_ModelsTexture[textureId] = meshTexture;
-    }
-  }
-}
-
-void VulkanRenderer::DrawQuad(const MeshTransform& _meshTransform) {
-  m_RendererData.m_ModelsTransform[0].push_back(_meshTransform.GetModelMatrix());
-}
-
-void VulkanRenderer::DrawCube(const MeshTransform& _meshTransform) {
-  m_RendererData.m_ModelsTransform[1].push_back(_meshTransform.GetModelMatrix());
-}
-
-void VulkanRenderer::DrawModel(Ref<Model>& _model, const MeshTransform& _meshTransform) {
-  const glm::mat4 modelMatrix = _meshTransform.GetModelMatrix();
-  const ModelId modelId = _model->m_Id;
-  if (!m_RendererData.m_ModelsToDraw.contains(modelId)) {
-    RegisterModel(_model);
-  }
-
-  m_RendererData.m_ModelsTransform[modelId].push_back(modelMatrix);
-}
-
 // TODO: refacto
 std::vector<UniformBufferObject> VulkanRenderer::BatchMvpUbo(const Camera& _camera, const VkExtent2D& _frameDimensions, float _deltaTime) {
   DODO_TRACE(VulkanRenderer);
 
   std::vector<UniformBufferObject> batchUbo;
   const VkExtent2D extent = _frameDimensions;
-  uint32_t lastTransform = 0;
-  for (const auto& [modelId, transforms] : m_RendererData.m_ModelsTransform) {
-    for (int i = 0; i < transforms.size(); ++i) {
-      m_UniformMvp.m_ModelTransforms[lastTransform++] = transforms[i];
-    }
-  }
+  uint32_t transformIndex = 0;
+  std::for_each(std::begin(m_RendererData.m_ModelsTransform), std::end(m_RendererData.m_ModelsTransform),
+                [&](const std::pair<const ModelId, const std::vector<glm::mat4>>& _entry) {
+                  for (const glm::mat4& transform : _entry.second) {
+                    m_UniformMvp.m_ModelTransforms[transformIndex++] = transform;
+                  }
+                });
 
   m_UniformMvp.m_View = _camera.GetViewMatrix();
-  m_UniformMvp.m_Proj = _camera.GetProjectionMatrix({extent.width, extent.height});
+  m_UniformMvp.m_Proj = _camera.GetProjectionMatrix();
 
   batchUbo.push_back(m_UniformMvp);
 

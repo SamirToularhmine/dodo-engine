@@ -1,7 +1,6 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Editor/ImGuiLayer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Renderer/Model.h>
 #include <DodoEngine/Renderer/Renderer.h>
@@ -16,6 +15,7 @@ class GLFWwindow;
 DODO_BEGIN_NAMESPACE
 
 class Camera;
+class Scene;
 class VulkanBuffer;
 class VulkanContext;
 class VulkanCommandBuffer;
@@ -69,11 +69,10 @@ struct RenderPass {
 class VulkanRenderer : public Renderer {
  public:
   VulkanRenderer(VulkanContext& _vulkanContext);
-
   ~VulkanRenderer() override = default;
 
   void Init(const Window& _window) override;
-  void Update(Frame& _frame, const Camera& _camera, const Light& _light, float _deltaTime) override;
+  void Update(Frame& _frame, const Scene& _scene, Camera& _camera, const Light& _light, float _deltaTime) override;
   void Shutdown() override;
 
   RenderPass BeginUIRenderPass(Frame& _frame) override;
@@ -81,12 +80,6 @@ class VulkanRenderer : public Renderer {
 
   Frame BeginFrame(const uint32_t& _frameNumber) override;
   void EndFrame(const Frame& _frame) override;
-
-  void RegisterModel(Ref<Model>& _mesh) override;
-
-  void DrawQuad(const MeshTransform& _meshTransform) override;
-  void DrawCube(const MeshTransform& _meshTransform) override;
-  void DrawModel(Ref<Model>& _mesh, const MeshTransform& _meshTransform) override;
 
  private:
   std::vector<UniformBufferObject> BatchMvpUbo(const Camera& _camera, const VkExtent2D& _frameDimensions, float _deltaTime);
@@ -106,8 +99,6 @@ class VulkanRenderer : public Renderer {
 
   Ref<VulkanGraphicPipeline> m_GridGraphicPipeline;
   Ref<VulkanDescriptorSet> m_GridDescriptorSet;
-
-
 };
 
 DODO_END_NAMESPACE

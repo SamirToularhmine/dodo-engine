@@ -1,5 +1,6 @@
 #include <DodoEngine/Core/Application.h>
 
+#include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanRenderer.h>
 #include <DodoEngine/Renderer/FbxLoader.h>
@@ -18,8 +19,8 @@
 
 DODO_BEGIN_NAMESPACE
 
-Ptr<Application> Application::Create() {
-  return std::make_unique<Application>();
+Ref<Application> Application::Create() {
+  return std::make_shared<Application>();
 }
 
 void Application::Init(const WindowProps& _windowProps) {
@@ -33,8 +34,18 @@ void Application::Init(const WindowProps& _windowProps) {
 
   m_Camera = std::make_unique<Camera>(glm::vec3{0, -2, -2});
 
-  m_ImGuiLayer = std::make_unique<ImGuiLayer>();
-  m_ImGuiLayer->Init(*m_Window);
+  m_EditorLayer = std::make_unique<EditorLayer>();
+  m_EditorLayer->Init(*m_Window);
+
+  m_Scene = std::make_shared<Scene>();
+
+  m_EditorLayer->LoadScene(m_Scene);
+}
+
+void Application::AttachGameLayer(Ref<GameLayer> _gameLayer) {
+  m_GameLayer = _gameLayer;
+
+  m_GameLayer->Init();
 }
 
 static float easeInOutSine(float x) {
@@ -43,29 +54,8 @@ static float easeInOutSine(float x) {
 
 void Application::Run() {
   {
-    float rotateDegree = 1;
-    // Quad Vertex buffer
-    std::vector<Ref<Mesh>> quadMeshes = {Mesh::Create(QUAD_VERTICES, QUAD_INDICES)};
-    Ref<Model> quadModel = std::make_shared<Model>(quadMeshes);
-    m_Renderer->RegisterModel(quadModel);
-
-    std::vector<Ref<Mesh>> cubeMeshes = {Mesh::Create(CUBE_VERTICES, CUBE_INDICES)};
-    Ref<Model> cubeMesh = std::make_shared<Model>(cubeMeshes);
-    m_Renderer->RegisterModel(cubeMesh);
-
-    // Ref<Model> hasbullah = std::make_shared<Model>(FbxLoader::LoadFromFile("resources/models/Hasbullah.fbx"));
-    // Ref<Mesh> vikingRoom = ObjLoader::LoadFromFile("resources/models/viking/VikingRoom.obj", "resources/models/viking/viking_room.png");
-    // Ref<Mesh> chestnut = ObjLoader::LoadFromFile("resources/models/chestnut/chestnut.obj", "resources/models/chestnut/model_Fire_emissive_transparent_color.tga.png");
-    // Ref<Mesh> cube = ObjLoader::LoadFromFile("resources/models/cube/Cube.obj", "resources/models/cube/Cube.png");
-    // Ref<Model> animatedCube = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/animated-cube/AnimatedCube.gltf"));
-    // Ref<Model> chessGame = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/beautiful-game/ABeautifulGame.gltf"));
-    // Ref<Model> tree = std::make_shared<Model>(ModelIdProvider::GetId(), GltfLoader::LoadFromFile("resources/models/tree/tree.gltf"));
-    // Ref<Model> avocado = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/avocado/Avocado.gltf"));
-    // Ref<Model> sponza = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sponza/Sponza.gltf"));
-    Ref<Model> sphere = std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sphere/sphere.gltf"));
-    const float movingSpeed = 0.1f;
-    bool reverse = false;
     uint32_t frameNumber = 0;
+    const glm::vec3 lightPos = {5, 2, 5.0f};
 
     while (!m_Window->ShouldClose()) {
       DODO_TRACE(Application);
@@ -76,40 +66,16 @@ void Application::Run() {
       float deltaTime = time - m_LastFrameTime;
       m_LastFrameTime = time;
 
-      for (int i = 0; i < 10; ++i) {
-        m_Renderer->DrawModel(sphere, {{i, 1, 1}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
-        m_Renderer->DrawModel(sphere, {{i, 1, -2}, {0, 0, 0}, {0.5f, 0.5f, 0.5f}});
-      }
-
-      const float pos = easeInOutSine(rotateDegree / 500) * 10.0f;
-      const glm::vec3 lightPos = {pos, 2, 5.0f};
-      m_Renderer->DrawCube({lightPos, {0, 0, 0}, {0.25f, 0.25f, 0.25f}});
-
       PerformanceManager::StoreFrameTime(deltaTime);
-
-      if (rotateDegree == 0) {
-        reverse = false;
-      }
-
-      if (rotateDegree == 500) {
-        reverse = true;
-      }
-
-      if (reverse) {
-        rotateDegree--;
-      } else {
-        rotateDegree++;
-      }
-
       m_Camera->Update(deltaTime);
 
       Frame frame = m_Renderer->BeginFrame(frameNumber++);
       {
         // Scene pass
-        { m_Renderer->Update(frame, *m_Camera, Light{lightPos}, deltaTime); }
+        { m_Renderer->Update(frame, *m_Scene, *m_Camera, Light{lightPos}, deltaTime); }
 
         // UI pass
-        { m_ImGuiLayer->Update(frame, *m_Renderer); }
+        { m_EditorLayer->Update(frame, *m_Camera, *m_Renderer); }
       }
       m_Renderer->EndFrame(frame);
 
@@ -118,7 +84,8 @@ void Application::Run() {
     }
   }
   m_Window->Shutdown();
-  m_ImGuiLayer->Shutdown();
+  m_EditorLayer->Shutdown();
+  m_Scene->Shutdown();
   m_Renderer->Shutdown();
 }
 

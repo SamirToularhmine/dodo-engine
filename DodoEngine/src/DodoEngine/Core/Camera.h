@@ -31,8 +31,10 @@ class Camera {
   void Update(float _deltaTime);
   void Reset();
 
-  glm::mat4 GetViewMatrix() const;
-  glm::mat4 GetProjectionMatrix(const glm::vec2& extent) const;
+  const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; };
+  const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; };
+
+  void UpdateProjectionMatrix(const glm::vec2& extent);
 
   static CameraPerformanceStats GetPerformanceStats() { return s_CameraPerformanceStats; };
 
@@ -44,6 +46,9 @@ class Camera {
   float m_Pitch{0.0f};
   float m_Yaw{0.0f};
   float m_Roll{0.0f};
+
+  glm::mat4 m_ProjectionMatrix;
+  glm::mat4 m_ViewMatrix;
 };
 
 DODO_END_NAMESPACE

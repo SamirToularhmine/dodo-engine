@@ -1,3 +1,5 @@
+#pragma once
+
 #include <DodoEngine/Core/Types.h>
 
 #include <imgui.h>
