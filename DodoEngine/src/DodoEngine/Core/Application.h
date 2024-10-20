@@ -1,29 +1,32 @@
 #pragma once
 
-#include <DodoEngine/Core/Camera.h>
-#include <DodoEngine/Core/GameLayer.h>
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Core/Window.h>
-#include <DodoEngine/Editor/EditorLayer.h>
-#include <DodoEngine/Editor/Scene.h>
-#include <DodoEngine/Renderer/Renderer.h>
 
 #include <memory>
 
 DODO_BEGIN_NAMESPACE
 
-class Application {
- public:
+class Camera;
+class EditorLayer;
+class GameLayer;
+class Renderer;
+class Scene;
+class Window;
+struct WindowProps;
+
+class Application
+{
+public:
   static Ref<Application> Create();
 
-  void Init(const WindowProps& _windowProps);
+  void Init(const WindowProps &_windowProps);
   void AttachGameLayer(Ref<GameLayer> _gameLayer);
 
   void Run();
 
-  Ref<Scene>& GetCurrentScene() { return m_Scene; }
+  Ref<Scene> &GetCurrentScene() { return m_Scene; }
 
- private:
+private:
   Ptr<Window> m_Window;
   Ptr<Renderer> m_Renderer;
   Ptr<Camera> m_Camera;

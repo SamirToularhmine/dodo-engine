@@ -6,15 +6,16 @@ DODO_BEGIN_NAMESPACE
 
 class Application;
 
-class GameLayer {
- public:
-  GameLayer(Ref<Application>& _application) : m_Application(_application) {}
+class GameLayer
+{
+public:
+  GameLayer(Ref<Application> &_application) : m_Application(_application) {}
 
   virtual void Init() = 0;
   virtual void Update(float _deltaTime) = 0;
   virtual void Shutdown() = 0;
 
- protected:
+protected:
   Ref<Application> m_Application;
 };
 

@@ -8,8 +8,9 @@ DODO_BEGIN_NAMESPACE
 
 enum Key;
 
-class InputManager {
- public:
+class InputManager
+{
+public:
   bool IsKeyDown(Key _key) const;
   bool IsKeyPressed(Key _key) const;
 
@@ -48,12 +49,13 @@ class InputManager {
 
   void Reset();
 
-  static InputManager& Get() {
+  static InputManager &Get()
+  {
     static InputManager instance;
     return instance;
   }
 
- private:
+private:
   std::unordered_map<Key, bool> m_KeysDown;
   std::unordered_map<Key, bool> m_KeysPressed;
 

@@ -9,36 +9,41 @@
 
 DODO_BEGIN_NAMESPACE
 
-struct CameraPerformanceStats {
+struct CameraPerformanceStats
+{
   float m_UpdateFrameTime{0.0f};
 };
 
-struct Quaternion {
+struct Quaternion
+{
   float m_Cosine;
   glm::vec3 m_Axis;
 };
 
-class Camera {
- public:
+class Camera
+{
+public:
   static constexpr float FAR_PLANE = 100.0f;
   static constexpr float NEAR_PLANE = 0.01f;
   static CameraPerformanceStats s_CameraPerformanceStats;
 
   Camera(glm::vec3 _position);
-
   ~Camera() = default;
 
   void Update(float _deltaTime);
   void Reset();
 
-  const glm::mat4& GetViewMatrix() const { return m_ViewMatrix; };
-  const glm::mat4& GetProjectionMatrix() const { return m_ProjectionMatrix; };
+  const glm::mat4 &GetViewMatrix() const { return m_ViewMatrix; };
+  const glm::mat4 &GetProjectionMatrix() const { return m_ProjectionMatrix; };
 
-  void UpdateProjectionMatrix(const glm::vec2& extent);
+  void UpdateProjectionMatrix(const glm::vec2 &extent);
 
-  static CameraPerformanceStats GetPerformanceStats() { return s_CameraPerformanceStats; };
+  static CameraPerformanceStats GetPerformanceStats()
+  {
+    return s_CameraPerformanceStats;
+  };
 
- private:
+private:
   static constexpr double MOUSE_SENSITIVITY = 100.0;
 
   glm::vec3 m_Position;

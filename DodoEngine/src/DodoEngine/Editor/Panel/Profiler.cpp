@@ -9,19 +9,22 @@
 
 DODO_BEGIN_NAMESPACE
 
-namespace editor {
-static bool PROFILER_PANEL_OPENED = true;
+namespace editor
+{
+static bool PROFILER_OPENED = true;
 static std::array<float, 100> s_FrameTimes{0};
 static uint64_t s_FrameNumber = 0;
 
-void ShowProfilerPanel() {
+void ShowProfiler()
+{
   // Performance stats window
   uint32_t frameIndex = s_FrameNumber++ % 100;
   s_FrameTimes[frameIndex] = PerformanceManager::GetFrameTime() * 10000;
 
-  ImGui::Begin("Dodo Engine Performance stats", &PROFILER_PANEL_OPENED);
+  ImGui::Begin("Dodo Engine Performance stats", &PROFILER_OPENED);
   {
-    for (const auto& [_name, _time] : PerformanceManager::GetTraces()) {
+    for (const auto &[_name, _time] : PerformanceManager::GetTraces())
+    {
       ImGui::Text("%s: %f ms", _name.c_str(), _time);
     }
 
@@ -30,6 +33,6 @@ void ShowProfilerPanel() {
 
   ImGui::End();
 }
-}  // namespace editor
+} // namespace editor
 
 DODO_END_NAMESPACE

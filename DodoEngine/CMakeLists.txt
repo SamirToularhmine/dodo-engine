@@ -102,6 +102,8 @@ set(IMGUI_SOURCE_LIST
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+    ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.h
+    ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
 
     ${imguizmo_SOURCE_DIR}/ImGuizmo.h
     ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp
@@ -119,7 +121,7 @@ set(INCLUDE_LIST "src" "vendor" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends
 file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST})
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST} )
 target_link_libraries(DodoEngine glfw volk glm GPUOpen::VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf EnTT::EnTT)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})

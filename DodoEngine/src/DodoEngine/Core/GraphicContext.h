@@ -6,9 +6,10 @@ DODO_BEGIN_NAMESPACE
 
 class Window;
 
-class GraphicContext {
- public:
-  virtual void Init(const Window& _window) = 0;
+class GraphicContext
+{
+public:
+  virtual void Init(const Window &_window) = 0;
 
   virtual void Update(uint32_t _frameId) = 0;
 

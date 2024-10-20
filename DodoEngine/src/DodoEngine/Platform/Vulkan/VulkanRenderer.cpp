@@ -2,7 +2,7 @@
 
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Window.h>
-#include <DodoEngine/Editor/Component.h>
+#include <DodoEngine/Editor/Component/Component.h>
 #include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
@@ -72,7 +72,7 @@ void VulkanRenderer::Init(const Window& _window) {
 
   // Adding the quad model as default
   std::vector<Ref<Mesh>> quadMeshes = {Mesh::Create(QUAD_VERTICES, QUAD_INDICES)};
-  Ref<Model> quadModel = std::make_shared<Model>(quadMeshes);
+  Ref<Model> quadModel = std::make_shared<Model>(quadMeshes, "internal");
   m_RendererData.m_ModelsToDraw[quadModel->m_Id] = quadModel;
 }
 
@@ -88,7 +88,7 @@ void VulkanRenderer::Update(Frame& _frame, const Scene& _scene, Camera& _camera,
   // Retrieve all entities with a light component : to do
   m_UniformMvp.m_LightPos = _light.m_Position;
 
-  _scene.ForAll<MeshComponent, TransformComponent>().each([&](const MeshComponent& _meshComponent, const TransformComponent& _transformComponent) {
+  _scene.ViewAll<MeshComponent, TransformComponent>().each([&](const MeshComponent& _meshComponent, const TransformComponent& _transformComponent) {
     const Ref<Model>& model = _meshComponent.m_Model;
     m_RendererData.m_ModelsTransform[model->m_Id].push_back(_transformComponent.m_TransformMatrix);
 
@@ -129,7 +129,7 @@ void VulkanRenderer::Update(Frame& _frame, const Scene& _scene, Camera& _camera,
     uint32_t modelId = 0;
 
     // Retrieve entities with meshes
-    _scene.ForAll<MeshComponent>().each([&](const MeshComponent& _meshComponent) {
+    _scene.ViewAll<MeshComponent>().each([&](const MeshComponent& _meshComponent) {
       const Ref<Model> model = _meshComponent.m_Model;
       const uint32_t instanceCount = m_RendererData.m_ModelsTransform[model->m_Id].size();
 

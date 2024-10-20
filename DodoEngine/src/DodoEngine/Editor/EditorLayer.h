@@ -14,19 +14,23 @@ class Renderer;
 class Scene;
 class Window;
 
-class EditorLayer {
- public:
+class EditorLayer
+{
+public:
   EditorLayer() = default;
 
   ~EditorLayer() = default;
 
-  void Init(const Window& _window) const;
-  void Update(Frame& _frame, const Camera& _camera, Renderer& _renderer) const;
+  void Init(const Window &_window);
+  void Update(Frame &_frame, const Camera &_camera, Renderer &_renderer) const;
   void Shutdown() const;
 
-  void LoadScene(Ref<Scene>& _scene);
+  void LoadScene(Ref<Scene> &_scene);
 
- private:
+private:
+  void InitTheme();
+
+private:
   Ref<Scene> m_Scene;
 };
 

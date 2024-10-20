@@ -4,7 +4,8 @@
 
 DODO_BEGIN_NAMESPACE
 
-enum Key {
+enum Key
+{
   DODO_KEY_SPACE = 32,
   DODO_KEY_APOSTROPHE = 39,
   DODO_KEY_COMMA = 44,

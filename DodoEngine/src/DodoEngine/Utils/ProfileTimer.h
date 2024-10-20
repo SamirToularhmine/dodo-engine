@@ -7,6 +7,7 @@
 
 #include <string>
 
+
 DODO_BEGIN_NAMESPACE
 
 class ProfileTimer {

@@ -11,16 +11,27 @@ using ModelId = uint32_t;
 
 static ModelId MODEL_ID = 0;
 
-struct ModelIdProvider {
+struct ModelIdProvider
+{
 
   static ModelId GetId() { return MODEL_ID++; }
 };
 
-struct Model {
+struct Model
+{
   ModelId m_Id;
+  std::string m_ModelPath;
   std::vector<Ref<Mesh>> m_Meshes;
 
-  Model(const std::vector<Ref<Mesh>>& _meshes) : m_Id(ModelIdProvider::GetId()), m_Meshes(_meshes) {}
+  Model(const std::vector<Ref<Mesh>> &_meshes, const std::string& _modelPath)
+      : m_Id(ModelIdProvider::GetId()), m_Meshes(_meshes), m_ModelPath(_modelPath)
+  {
+  }
+
+  static Ref<Model> Create(const std::vector<Ref<Mesh>> &_meshes, const std::string& _modelPath)
+  {
+    return std::make_shared<Model>(_meshes, _modelPath);
+  }
 };
 
 DODO_END_NAMESPACE
