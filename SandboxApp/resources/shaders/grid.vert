@@ -1,6 +1,5 @@
 #version 450
 
-// To fix
 layout (constant_id = 0) const int MAX_MODEL_COUNT = 1021;
 
 layout(binding = 0) uniform UniformBufferObject {

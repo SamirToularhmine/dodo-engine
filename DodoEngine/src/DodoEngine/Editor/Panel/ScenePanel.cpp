@@ -47,17 +47,17 @@ static void ShowScenePanel(Scene &_scene, const Camera &_camera)
   // Show scene panel
   ImGui::Begin("Scene panel", &SCENE_PANEL_OPENED);
 
-  if (ImGui::IsKeyPressed(ImGuiKey_T))
+  if (ImGui::IsKeyPressed(ImGuiKey_W))
   {
     s_GuizmoMode = ImGuizmo::TRANSLATE;
   }
 
-  if (ImGui::IsKeyPressed(ImGuiKey_S))
+  if (ImGui::IsKeyPressed(ImGuiKey_R))
   {
     s_GuizmoMode = ImGuizmo::SCALE;
   }
 
-  if (ImGui::IsKeyPressed(ImGuiKey_R))
+  if (ImGui::IsKeyPressed(ImGuiKey_E))
   {
     s_GuizmoMode = ImGuizmo::ROTATE;
   }
@@ -76,15 +76,14 @@ static void ShowScenePanel(Scene &_scene, const Camera &_camera)
     s_WindowResized = true;
   }
 
-  _scene.GetAll<EntityComponent>().each([&](EntityComponent &_entityComponent) {
+  _scene.GetAll<EntityComponent, TransformComponent>().each([&](EntityComponent &_entityComponent,
+                                                                TransformComponent& _transformComponent) {
     const EditorEntity &editorEntity = _entityComponent.m_EditorEntity;
-    Entity &entity = *_entityComponent.m_Entity;
-    TransformComponent *entityTransform =
-        _scene.TryGetComponentFromEntity<TransformComponent>(editorEntity);
+    Ref<EntityComponent> &selectedEntity = _scene.GetSelectedEntity();
 
-    if (entity.m_Selected && entityTransform != nullptr)
+    if (selectedEntity && editorEntity == selectedEntity->m_EditorEntity)
     {
-      float *transformMatrix = glm::value_ptr(entityTransform->m_TransformMatrix);
+      float *transformMatrix = glm::value_ptr(_transformComponent.m_TransformMatrix);
       const float *cameraViewMatrix = glm::value_ptr(_camera.GetViewMatrix());
 
       glm::mat4 cameraProjectionMatrix = _camera.GetProjectionMatrix();
@@ -106,9 +105,9 @@ static void ShowScenePanel(Scene &_scene, const Camera &_camera)
         float newScale[3];
         ImGuizmo::DecomposeMatrixToComponents(transformMatrix, newPos, newRot, newScale);
 
-        entityTransform->m_Position = {newPos[0], newPos[1], newPos[2]};
-        entityTransform->m_Rotation = {newRot[0], newRot[1], newRot[2]};
-        entityTransform->m_Scale = {newScale[0], newScale[1], newScale[2]};
+        _transformComponent.m_Position = {newPos[0], newPos[1], newPos[2]};
+        _transformComponent.m_Rotation = {newRot[0], newRot[1], newRot[2]};
+        _transformComponent.m_Scale = {newScale[0], newScale[1], newScale[2]};
       }
     }
   });

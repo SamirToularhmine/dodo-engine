@@ -21,6 +21,9 @@ public:
   using EntityPair = std::pair<const EntitiesKeyType, EntitiesValueType>;
 
   EditorEntity AddEntity(const char *_name);
+  void SelectEntity(EntityComponent &_entityComponent);
+  void UnselectEntity() { m_SelectedEntity.reset(); };
+  Ref<EntityComponent> &GetSelectedEntity() { return m_SelectedEntity; };
   void DeleteEntity(const EditorEntity &_entity);
   void Shutdown();
 
@@ -58,6 +61,7 @@ public:
   }
 
 private:
+  Ref<EntityComponent> m_SelectedEntity;
   entt::registry m_Registry;
 };
 

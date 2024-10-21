@@ -18,7 +18,6 @@ namespace editor
 
 static std::string s_TempEntityName;
 static std::string s_TempEntityModelName;
-extern std::optional<EntityComponent> s_SelectedEntity;
 
 static bool Validate()
 {
@@ -128,11 +127,11 @@ static void ShowComponentControl<MeshComponent>(MeshComponent &_meshComponent, S
 
   if (!removeComponent)
   {
-    _scene.RemoveComponentFromEntity<MeshComponent>(
-        editor::s_SelectedEntity.value().m_EditorEntity);
+    const Ref<EntityComponent> &selectedEntity = _scene.GetSelectedEntity();
+    _scene.RemoveComponentFromEntity<MeshComponent>(selectedEntity->m_EditorEntity);
   }
 
-  if (Validate() && !s_TempEntityName.empty())
+  if (Validate() && !s_TempEntityModelName.empty())
   {
     _meshComponent.m_Model = dodo::GltfLoader::LoadFromFile(s_TempEntityModelName.c_str());
   }

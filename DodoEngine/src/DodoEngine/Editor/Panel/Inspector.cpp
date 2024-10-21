@@ -1,8 +1,8 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Editor/Component/Component.h>
+#include <DodoEngine/Editor/Scene.h>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -15,12 +15,11 @@ DODO_BEGIN_NAMESPACE
 namespace editor
 {
 static bool INSPECTOR_OPENED = true;
-extern std::optional<EntityComponent> s_SelectedEntity;
 
 template <typename ComponentType>
 static void ShowComponent(const EditorEntity &_editorEntity, Scene &_scene)
 {
-  ComponentType* component = _scene.TryGetComponentFromEntity<ComponentType>(_editorEntity);
+  ComponentType *component = _scene.TryGetComponentFromEntity<ComponentType>(_editorEntity);
   if (component != nullptr)
   {
     ShowComponentControl<ComponentType>(*component, _scene);
@@ -38,13 +37,28 @@ static void ShowInspector(Scene &_scene)
   {
     ImGui::BeginChild("Scrolling");
 
-    if (editor::s_SelectedEntity.has_value())
+    const Ref<EntityComponent> &selectedEntity = _scene.GetSelectedEntity();
+    if (selectedEntity)
     {
-      const EditorEntity &editorEntity = editor::s_SelectedEntity.value().m_EditorEntity;
+      const EditorEntity &editorEntity = selectedEntity->m_EditorEntity;
 
       ShowComponent<EntityComponent>(editorEntity, _scene);
       ShowComponent<TransformComponent>(editorEntity, _scene);
       ShowComponent<MeshComponent>(editorEntity, _scene);
+
+      if (ImGui::Button("+ Add a new component", ImVec2(ImGui::GetContentRegionAvail().x, 0)))
+      {
+        ImGui::OpenPopup("CreateComponentPopup");
+      }
+
+      if (ImGui::BeginPopup("CreateComponentPopup"))
+      {
+        if (ImGui::Selectable("Mesh Component"))
+        {
+        }
+
+        ImGui::EndPopup();
+      }
     }
     else
     {

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <entt/entt.hpp>
 #include <format>
+#include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <optional>
@@ -23,14 +24,13 @@ DODO_BEGIN_NAMESPACE
 namespace editor
 {
 static bool SCENE_OBJECTS_OPENED = true;
-static std::optional<EntityComponent> s_SelectedEntity;
 
 static void ShowSceneObjects(Scene &_scene)
 {
-  if (ImGui::IsKeyPressed(ImGuiKey_Delete) && s_SelectedEntity.has_value())
+  const Ref<EntityComponent> &selectedEntity = _scene.GetSelectedEntity();
+  if (ImGui::IsKeyPressed(ImGuiKey_Delete) && selectedEntity)
   {
-    _scene.DeleteEntity(s_SelectedEntity.value().m_EditorEntity);
-    s_SelectedEntity.reset();
+    _scene.DeleteEntity(selectedEntity->m_EditorEntity);
   }
 
   // Show scene objects panel
@@ -50,37 +50,35 @@ static void ShowSceneObjects(Scene &_scene)
 
       if (ImGui::MenuItem("Cube"))
       {
-        const EditorEntity &cubeEntity = _scene.AddEntity("Entity");
         _scene.AddComponentToEntity<MeshComponent>(
-            cubeEntity, {dodo::GltfLoader::LoadFromFile("/animated-cube/AnimatedCube.gltf")});
+            _scene.AddEntity("Cube"),
+            {dodo::GltfLoader::LoadFromFile("/animated-cube/AnimatedCube.gltf")});
       }
 
       if (ImGui::MenuItem("Sphere"))
       {
-        const EditorEntity &sphereEntity = _scene.AddEntity("Entity");
         _scene.AddComponentToEntity<MeshComponent>(
-            sphereEntity, {dodo::GltfLoader::LoadFromFile("/sphere/sphere.gltf")});
+            _scene.AddEntity("Sphere"), {dodo::GltfLoader::LoadFromFile("/sphere/sphere.gltf")});
       }
 
       ImGui::EndPopup();
     }
 
-    _scene.GetAll<EntityComponent>().each([&](EntityComponent &_entityComponent) {
-      const EditorEntity &editorEntity = _entityComponent.m_EditorEntity;
-      Entity &entity = *_entityComponent.m_Entity;
+    _scene.GetAll<EntityComponent, TransformComponent, MeshComponent>().each(
+        [&](EntityComponent &_entityComponent, TransformComponent &_transformComponent,
+            MeshComponent &_meshComponent) {
+          const EditorEntity &editorEntity = _entityComponent.m_EditorEntity;
+          Entity &entity = *_entityComponent.m_Entity;
 
-      if (ImGui::Selectable(std::format("{}", entity.m_Name).c_str(), &entity.m_Selected))
-      {
-        if (entity.m_Selected)
-        {
-          s_SelectedEntity = _entityComponent;
-        }
-        else
-        {
-          s_SelectedEntity.reset();
-        }
-      }
-    });
+          ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.025f, 0.5f));
+          if (ImGui::Selectable(
+                  std::format("{} #{}", entity.m_Name, static_cast<uint32_t>(editorEntity)).c_str(),
+                  &entity.m_Selected, ImGuiSelectableFlags_None, ImVec2(0, 25)))
+          {
+            _scene.SelectEntity(_entityComponent);
+          }
+          ImGui::PopStyleVar();
+        });
 
     ImGui::EndChild();
   }

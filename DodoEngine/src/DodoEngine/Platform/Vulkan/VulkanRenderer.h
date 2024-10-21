@@ -82,7 +82,7 @@ class VulkanRenderer : public Renderer {
   void EndFrame(const Frame& _frame) override;
 
  private:
-  std::vector<UniformBufferObject> BatchMvpUbo(const Camera& _camera, const VkExtent2D& _frameDimensions, float _deltaTime);
+  void UpdateUbo(const Camera &_camera, const Scene &_scene);
 
   RenderPass BeginSceneRenderPass(Frame& _frame);
   void EndSceneRenderPass(const RenderPass& _renderPass);

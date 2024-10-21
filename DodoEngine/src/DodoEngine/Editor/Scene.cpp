@@ -15,12 +15,30 @@ EditorEntity Scene::AddEntity(const char *_name)
   return entity;
 }
 
-void Scene::DeleteEntity(const EditorEntity &_entity) { m_Registry.destroy(_entity); }
+void Scene::DeleteEntity(const EditorEntity &_entity)
+{
+  m_Registry.destroy(_entity);
+
+  if (_entity == m_SelectedEntity->m_EditorEntity)
+  {
+    UnselectEntity();
+  }
+}
 
 void Scene::Shutdown()
 {
   m_Registry.view<MeshComponent>().each(
       [&](MeshComponent &_meshComponent) { _meshComponent.m_Model.reset(); });
+}
+
+void Scene::SelectEntity(EntityComponent &_entityComponent)
+{
+  if (m_SelectedEntity)
+  {
+    m_SelectedEntity->m_Entity->m_Selected = false;
+  }
+  _entityComponent.m_Entity->m_Selected = true;
+  m_SelectedEntity = std::make_shared<EntityComponent>(_entityComponent);
 }
 
 DODO_END_NAMESPACE
