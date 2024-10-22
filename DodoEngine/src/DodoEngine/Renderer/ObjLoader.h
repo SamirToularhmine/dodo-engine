@@ -7,10 +7,10 @@
 
 DODO_BEGIN_NAMESPACE
 
-struct Mesh;
+struct Model;
 
 struct ObjLoader {
-  static Ref<Mesh> LoadFromFile(const char* _modelFileName, const char* _textureFileName = Texture::DEFAULT_TEXTURE_PATH);
+  static Ref<Model> LoadFromFile(const std::string& _filePath, const char* _textureFileName = Texture::DEFAULT_TEXTURE_PATH);
 };
 
 DODO_END_NAMESPACE

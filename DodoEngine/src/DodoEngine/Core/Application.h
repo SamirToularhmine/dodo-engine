@@ -17,14 +17,14 @@ struct WindowProps;
 class Application
 {
 public:
-  static Ref<Application> Create();
+  static Ptr<Application> Create();
 
   void Init(const WindowProps &_windowProps);
   void AttachGameLayer(Ref<GameLayer> _gameLayer);
 
   void Run();
 
-  Ref<Scene> &GetCurrentScene() { return m_Scene; }
+  Ref<Scene> GetCurrentScene() { return m_Scene; }
 
 private:
   Ptr<Window> m_Window;
@@ -33,7 +33,6 @@ private:
   Ptr<EditorLayer> m_EditorLayer;
 
   Ref<GameLayer> m_GameLayer;
-
   Ref<Scene> m_Scene;
 
   float m_LastFrameTime;

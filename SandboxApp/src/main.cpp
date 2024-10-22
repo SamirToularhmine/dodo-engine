@@ -12,10 +12,8 @@ public:
     m_SphereModel = dodo::GltfLoader::LoadFromFile("/sphere/sphere.gltf");
 
     m_Scene = m_Application->GetCurrentScene();
-
-    const dodo::EditorEntity sphereEntity = m_Scene->AddEntity("My first entity");
-
-    m_Scene->AddComponentToEntity<dodo::MeshComponent>(sphereEntity, {m_SphereModel});
+    m_Scene->AddComponentToEntity<dodo::MeshComponent>(m_Scene->AddEntity("My first entity"),
+                                                       {m_SphereModel});
 
     /*for (int i = 0; i < 10; ++i) {
       m_Renderer->DrawModel(sphere, {{i, 1, 1}, {0, 0, 0}, {0.5f, 0.5f,

@@ -1,6 +1,6 @@
 #include <DodoEngine/Renderer/FbxLoader.h>
 
-#include <DodoEngine/Renderer/Mesh.h>
+#include <DodoEngine/Renderer/Model.h>
 #include <DodoEngine/Utils/Utils.h>
 
 #include <ofbx.h>
@@ -9,9 +9,9 @@
 
 DODO_BEGIN_NAMESPACE
 
-Ref<Mesh> FbxLoader::LoadFromFile(const char* _fileName) {
+Ref<Model> FbxLoader::LoadFromFile(const std::string& _fileName) {
   std::vector<Vertex> vertices;
-  std::vector<char> fbxFile = readFile(_fileName);
+  std::vector<char> fbxFile = readFile(_fileName.c_str());
 
   ofbx::LoadFlags flags = ofbx::LoadFlags::IGNORE_BLEND_SHAPES | ofbx::LoadFlags::IGNORE_CAMERAS | ofbx::LoadFlags::IGNORE_LIGHTS |
                           ofbx::LoadFlags::IGNORE_SKIN | ofbx::LoadFlags::IGNORE_BONES | ofbx::LoadFlags::IGNORE_PIVOTS | ofbx::LoadFlags::IGNORE_POSES |
@@ -42,7 +42,8 @@ Ref<Mesh> FbxLoader::LoadFromFile(const char* _fileName) {
     }
   }
 
-  return Mesh::Create({vertices}, {}, {});
+  // To fill with normals and index and stuff
+  return Model::Create({Mesh::Create({vertices}, {}, {})}, _fileName);
 }
 
 DODO_END_NAMESPACE

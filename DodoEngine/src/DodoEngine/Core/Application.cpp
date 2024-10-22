@@ -22,10 +22,7 @@
 
 DODO_BEGIN_NAMESPACE
 
-Ref<Application> Application::Create()
-{
-  return std::make_shared<Application>();
-}
+Ptr<Application> Application::Create() { return std::make_unique<Application>(); }
 
 void Application::Init(const WindowProps &_windowProps)
 {
@@ -79,8 +76,7 @@ void Application::Run()
       {
         // Scene pass
         {
-          m_Renderer->Update(frame, *m_Scene, *m_Camera, Light{lightPos},
-                             deltaTime);
+          m_Renderer->Update(frame, *m_Scene, *m_Camera, Light{lightPos}, deltaTime);
         }
 
         // UI pass

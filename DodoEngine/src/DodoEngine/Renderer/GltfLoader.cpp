@@ -231,7 +231,7 @@ uint32_t GltfLoader::GetAccessorByName(AttributeType _accessorName,
   return _primitive.attributes.at(accessorName);
 }
 
-Ref<Model> GltfLoader::LoadFromFile(const char *_modelFileName)
+Ref<Model> GltfLoader::LoadFromFile(const std::string& _modelFileName)
 {
   tinygltf::Model model;
   tinygltf::TinyGLTF loader;

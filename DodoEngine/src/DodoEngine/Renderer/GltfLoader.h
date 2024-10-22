@@ -100,7 +100,7 @@ class GltfLoader
   static inline const std::string RESOURCES_DIRECTORY = "resources/models";
 
 public:
-  static Ref<Model> LoadFromFile(const char *_modelFileName);
+  static Ref<Model> LoadFromFile(const std::string& _modelFileName);
 
 private:
   static constexpr glm::vec4 DEFAULT_COLOR = {0.0f, 0.0f, 1.0f, 1.0f};
