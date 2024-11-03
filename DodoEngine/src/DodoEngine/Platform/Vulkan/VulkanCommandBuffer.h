@@ -16,6 +16,7 @@ class VulkanCommandBuffer {
   void BeginRecording() const;
   void EndRecording() const;
   void Submit(const VkQueue& _queue);
+  void Reset();
 
   operator VkCommandBuffer&() { return m_VkCommandBuffer; }
 

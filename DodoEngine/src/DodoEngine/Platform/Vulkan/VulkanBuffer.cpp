@@ -10,8 +10,8 @@ DODO_BEGIN_NAMESPACE
 VulkanBuffer::VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec) : m_ElementCount(0) {
 
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
-  const Ref<VulkanPhysicalDevice>& vulkanPhysicalDevice = vulkanContext.GetVulkanPhysicalDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanPhysicalDevice> vulkanPhysicalDevice = vulkanContext.GetVulkanPhysicalDevice();
   const VmaAllocator& allocator = vulkanContext.GetAllocator();
   const VkDeviceSize& allocationSize = _vulkanBufferSpec.m_AllocationSize;
 
@@ -36,7 +36,7 @@ VulkanBuffer::VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec) : m_Elemen
 
 VulkanBuffer::~VulkanBuffer() {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VmaAllocator& allocator = vulkanContext.GetAllocator();
 
   vkDeviceWaitIdle(*vulkanDevice);

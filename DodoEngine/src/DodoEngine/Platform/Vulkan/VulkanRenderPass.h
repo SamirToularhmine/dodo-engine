@@ -22,7 +22,7 @@ struct VulkanRenderPassAttachments {
 class VulkanRenderPass {
 
  public:
-  VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments);
+  VulkanRenderPass(const Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments);
   ~VulkanRenderPass();
 
   void Begin(const RenderPass& _renderPass) const;

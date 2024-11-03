@@ -14,7 +14,7 @@
 
 DODO_BEGIN_NAMESPACE
 
-VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice>& _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments)
+VulkanRenderPass::VulkanRenderPass(const Ref<VulkanDevice> _vulkanDevice, const VulkanRenderPassAttachments& _renderPassAttachments)
 	: m_VulkanDevice(_vulkanDevice)
 {
     VkAttachmentReference colorAttachmentRef{};

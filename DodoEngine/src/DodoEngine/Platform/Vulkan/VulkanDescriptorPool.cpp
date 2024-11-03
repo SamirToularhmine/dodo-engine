@@ -7,7 +7,7 @@
 
 DODO_BEGIN_NAMESPACE
 
-VulkanDescriptorPool::VulkanDescriptorPool(uint32_t _descriptorCount, const Ref<VulkanDevice>& _vulkanDevice) : m_VulkanDevice(_vulkanDevice) {
+VulkanDescriptorPool::VulkanDescriptorPool(uint32_t _descriptorCount, const Ref<VulkanDevice> _vulkanDevice) : m_VulkanDevice(_vulkanDevice) {
   VkDescriptorPoolSize poolSizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
                                       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
                                       {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},

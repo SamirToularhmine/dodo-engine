@@ -31,15 +31,16 @@ class VulkanTextureImage;
 struct VulkanSwapChainData;
 
 class VulkanContext : public GraphicContext {
+  using CommandBuffers = std::vector<Ref<VulkanCommandBuffer>>;
  public:
-  static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+  // static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
  public:
   void Init(const Window& _window) override;
-
   void Update(uint32_t _frameId) override {}
-
   void Shutdown() override;
+
+  void BeginFrame(Frame& _frame);
 
   void BeginSceneRenderPass(RenderPass& _renderPass) const;
   void EndSceneRenderPass(const RenderPass& _renderPass) const;
@@ -48,10 +49,9 @@ class VulkanContext : public GraphicContext {
   void EndUIRenderPass(const RenderPass& _renderPass) const;
 
   void RescaleOffscreenTextureImage(uint32_t _width, uint32_t _height);
-  void RecreateSwapChain(const uint32_t& _frameIndex, RenderPass& _renderPass);
 
-  const Ref<VulkanDevice>& GetVulkanDevice() const { return m_Device; }
-  const Ref<VulkanPhysicalDevice>& GetVulkanPhysicalDevice() const { return m_PhysicalDevice; }
+  const Ref<VulkanDevice> GetVulkanDevice() const { return m_Device; }
+  const Ref<VulkanPhysicalDevice> GetVulkanPhysicalDevice() const { return m_PhysicalDevice; }
   const VmaAllocator& GetAllocator() const { return m_VmaAllocator; }
   const VkCommandPool& GetCommandPool() const { return m_CommandPool; }
   const Ref<VulkanInstance> GetInstance() const { return m_Instance; }
@@ -59,8 +59,8 @@ class VulkanContext : public GraphicContext {
   const Ref<VulkanDescriptorPool> GetDescriptorPool() const { return m_DescriptorPool; }
   const Ref<VulkanRenderPass> GetSceneRenderPass() const { return m_SceneRenderPass; }
   const Ref<VulkanRenderPass> GetUiRenderPass() const { return m_UiRenderPass; }
-  const Ref<VulkanCommandBuffer>& GetCommandBuffer(const uint32_t& _frameNumber) const { return m_CommandBuffers[_frameNumber % MAX_FRAMES_IN_FLIGHT]; }
-  const Ref<VulkanTextureImage>& GetOffScreenTextureImage() const { return m_OffScreenTextureImage; }
+  const Ref<VulkanCommandBuffer> GetCommandBuffer(const uint32_t& _imageIndex) const { return m_CommandBuffers[_imageIndex]; }
+  const Ref<VulkanTextureImage> GetOffScreenTextureImage() const { return m_OffScreenTextureImage; }
   
   void SubmitQueue(const Frame& _frame);
   void PresentQueue(const Frame& _frame);
@@ -69,6 +69,10 @@ class VulkanContext : public GraphicContext {
     static VulkanContext instance;
     return instance;
   }
+
+private:
+  void RetrieveSwapChainImage(uint32_t& _imageIndex);
+  void RecreateSwapChain();
 
  private:
   GLFWwindow* m_NativeWindow;
@@ -90,10 +94,9 @@ class VulkanContext : public GraphicContext {
 
   VkCommandPool m_CommandPool;
 
-  std::vector<Ref<VulkanCommandBuffer>> m_CommandBuffers;
-  std::vector<VkSemaphore> m_ImagesAvailableSemaphores;
-  std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-  std::vector<VkFence> m_InFlightFences;
+  CommandBuffers m_CommandBuffers;
+  VkSemaphore m_ImagesAvailableSemaphore;
+  VkSemaphore m_RenderFinishedSemaphore;
 };
 
 DODO_END_NAMESPACE

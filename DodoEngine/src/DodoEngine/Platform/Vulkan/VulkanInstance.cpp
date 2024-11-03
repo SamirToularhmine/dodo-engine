@@ -12,12 +12,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(
 {
     if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
-        std::println("{} - {}: {}", callback_data->messageIdNumber,
+        DODO_INFO("{} - {}: {}", callback_data->messageIdNumber,
                      callback_data->pMessageIdName, callback_data->pMessage);
     }
     else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
-        std::println("{} - {}: {}", callback_data->messageIdNumber,
+        DODO_INFO("{} - {}: {}", callback_data->messageIdNumber,
              callback_data->pMessageIdName, callback_data->pMessage);
     }
     return VK_FALSE;
@@ -31,10 +31,11 @@ VulkanInstance::VulkanInstance(const VkApplicationInfo& _applicationInfo)
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     
     m_InstanceExtensions.assign(glfwExtensions, glfwExtensions + glfwExtensionCount);
-    // m_InstanceExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    m_InstanceExtensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     m_InstanceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
     m_ValidationLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+    m_ValidationLayers.emplace_back("VK_LAYER_KHRONOS_synchronization2");
 
     VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {
         VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};

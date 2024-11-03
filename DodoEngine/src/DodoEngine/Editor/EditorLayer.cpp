@@ -44,14 +44,14 @@ void EditorLayer::Init(const Window &_window)
   vulkanInitInfo.DescriptorPool = *vulkanContext.GetDescriptorPool();
   vulkanInitInfo.RenderPass = *vulkanContext.GetUiRenderPass();
   vulkanInitInfo.Subpass = 0;
-  vulkanInitInfo.MinImageCount = VulkanContext::MAX_FRAMES_IN_FLIGHT;
-  vulkanInitInfo.ImageCount = VulkanContext::MAX_FRAMES_IN_FLIGHT;
+  vulkanInitInfo.MinImageCount = 2;
+  vulkanInitInfo.ImageCount = 2;
   vulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
   ImGui_ImplVulkan_Init(&vulkanInitInfo);
 
   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  io.Fonts->AddFontFromFileTTF("resources/fonts/satochi/Satoshi-Variable.ttf", 15.0f, NULL,
+  io.Fonts->AddFontFromFileTTF("fonts/satochi/Satoshi-Variable.ttf", 15.0f, NULL,
                                io.Fonts->GetGlyphRangesDefault());
   ImGui_ImplVulkan_CreateFontsTexture();
 
@@ -198,7 +198,6 @@ void EditorLayer::InitTheme()
   style.FramePadding = ImVec2(10, 10);
   style.SeparatorTextAlign = ImVec2(0.5f, 0.5f);
   style.SeparatorTextBorderSize = 5;
-  
 }
 
 DODO_END_NAMESPACE

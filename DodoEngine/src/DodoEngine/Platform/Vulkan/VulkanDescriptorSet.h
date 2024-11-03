@@ -28,7 +28,7 @@ class VulkanDescriptorSet {
   ~VulkanDescriptorSet();
 
   void UpdateUniformDescriptor(const VulkanBuffer& _buffer);
-  void UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures);
+  void UpdateImageSamplers(const std::vector<Ref<Texture>> _textures);
 
   void Bind(const VkPipelineLayout& _vkPipelineLayout, const VkCommandBuffer& _commandBuffer);
 

@@ -22,7 +22,7 @@
 
 DODO_BEGIN_NAMESPACE
 
-Ptr<Application> Application::Create() { return std::make_unique<Application>(); }
+Ref<Application> Application::Create() { return std::make_shared<Application>(); }
 
 void Application::Init(const WindowProps &_windowProps)
 {
@@ -47,11 +47,8 @@ void Application::Init(const WindowProps &_windowProps)
 void Application::AttachGameLayer(Ref<GameLayer> _gameLayer)
 {
   m_GameLayer = _gameLayer;
-
   m_GameLayer->Init();
 }
-
-static float easeInOutSine(float x) { return -(cos(M_PI * x) - 1) / 2; }
 
 void Application::Run()
 {
@@ -68,7 +65,7 @@ void Application::Run()
       const float time = m_Window->GetTime();
       float deltaTime = time - m_LastFrameTime;
       m_LastFrameTime = time;
-
+      
       PerformanceManager::StoreFrameTime(deltaTime);
       m_Camera->Update(deltaTime);
 

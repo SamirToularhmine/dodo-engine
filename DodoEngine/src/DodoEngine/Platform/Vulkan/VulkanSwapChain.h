@@ -49,10 +49,11 @@ class VulkanSwapChain {
   const ImageViews& GetImagesViews() { return m_ImageViews; }
 
   void InitFrameBuffers(const VulkanRenderPass& _renderPass);
-  const Ref<VulkanFrameBuffer>& GetCurrentFrameBuffer(uint32_t frameIndex) const { return m_FrameBuffers[frameIndex]; };
+  const Ref<VulkanFrameBuffer> GetCurrentFrameBuffer(uint32_t _imageIndex) const { return m_FrameBuffers[_imageIndex]; };
   void DestroyFrameBuffers();
 
-  bool AcquireNextImage(const VkSemaphore& _semaphore, uint32_t& _imageIndex) const;
+  bool AcquireNextImage(VkSemaphore _semaphore, uint32_t& _imageIndex);
+  uint32_t GetImageCount() const { return m_ImageCount; }
 
   operator const VkSwapchainKHR&() const { return m_VkSwapChain; }
 
@@ -67,6 +68,8 @@ class VulkanSwapChain {
 
   Ptr<VulkanDepthImage> m_DepthImage;
   VulkanSwapChainData m_ChosenSwapChainDetails;
+
+  uint32_t m_ImageCount;
 };
 
 DODO_END_NAMESPACE

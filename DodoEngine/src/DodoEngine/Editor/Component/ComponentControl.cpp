@@ -1,5 +1,3 @@
-#pragma once
-
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Editor/Component/Component.h>
 #include <DodoEngine/Editor/Scene.h>
@@ -19,19 +17,19 @@ namespace editor
 static std::string s_TempEntityName;
 static std::string s_TempEntityModelName;
 
-static bool Validate()
+bool Validate()
 {
   return ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsItemDeactivatedAfterEdit();
 }
 
 template <typename ComponentType>
-static void ShowComponentControl(ComponentType &_component, Scene &_scene)
+void ShowComponentControl(ComponentType &_component, Scene &_scene)
 {
   ImGui::Text("No control panel registered for this component type");
 }
 
 template <>
-static void ShowComponentControl<EntityComponent>(EntityComponent &_entityComponent, Scene &_scene)
+void ShowComponentControl<EntityComponent>(EntityComponent &_entityComponent, Scene &_scene)
 {
   Entity &entity = *_entityComponent.m_Entity;
   s_TempEntityName = entity.m_Name;
@@ -59,7 +57,7 @@ static void ShowComponentControl<EntityComponent>(EntityComponent &_entityCompon
 }
 
 template <>
-static void ShowComponentControl<TransformComponent>(TransformComponent &_transformComponent,
+void ShowComponentControl<TransformComponent>(TransformComponent &_transformComponent,
                                                      Scene &_scene)
 {
   ImGui::Text("Transform");
@@ -112,9 +110,9 @@ static void ShowComponentControl<TransformComponent>(TransformComponent &_transf
 }
 
 template <>
-static void ShowComponentControl<MeshComponent>(MeshComponent &_meshComponent, Scene &_scene)
+void ShowComponentControl<MeshComponent>(MeshComponent &_meshComponent, Scene &_scene)
 {
-  static bool removeComponent = true;
+  bool removeComponent = true;
 
   if (ImGui::CollapsingHeader("Mesh", &removeComponent))
   {

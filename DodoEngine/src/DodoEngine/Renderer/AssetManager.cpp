@@ -21,7 +21,7 @@ Ref<Asset<Model>> AssetManager::LoadModelAsset(const std::string &_assetFilePath
 Ref<Asset<Texture>> AssetManager::LoadTextureAsset(const std::string &_assetFilePath)
 {
   const AssetId newAssetId = GetNextAssetId();
-  m_LoadedModels[newAssetId] = std::make_shared<Asset<Model>>(
+  m_LoadedTextures[newAssetId] = std::make_shared<Asset<Texture>>(
       Asset<Texture>{.m_Id = newAssetId,
                    .m_FilePath = _assetFilePath,
                    .m_Data = Texture::LoadFromFile(_assetFilePath)});

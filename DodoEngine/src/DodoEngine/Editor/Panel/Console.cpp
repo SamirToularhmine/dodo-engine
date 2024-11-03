@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONSOLE_CPP
+#define CONSOLE_CPP
 
 #include <DodoEngine/Core/Types.h>
 
@@ -23,3 +24,5 @@ static void ShowConsole()
 } // namespace editor
 
 DODO_END_NAMESPACE
+
+#endif

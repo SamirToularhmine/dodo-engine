@@ -44,7 +44,7 @@ Ref<Model> ObjLoader::LoadFromFile(const std::string& _filePath, const char *_te
     }
   }
 
-  return Model::Create({Mesh::Create({vertices}, {indices}, {_textureFileName})}, _filePath);
+  return Model::Create({Mesh::Create({vertices}, {indices}, _textureFileName)}, _filePath);
 }
 
 DODO_END_NAMESPACE

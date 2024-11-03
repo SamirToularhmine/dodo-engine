@@ -31,7 +31,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& _vkPhysicalDevice, const 
     }
 
     VulkanExtensions requiredDeviceExtension = {
-        // "VK_KHR_portability_subset",
+        "VK_KHR_portability_subset",
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 

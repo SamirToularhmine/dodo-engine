@@ -1,6 +1,4 @@
 #include <DodoEngine/Platform/Vulkan/VulkanDescriptorSet.h>
-
-#include <DodoEngine/Platform/VUlkan/VulkanRenderer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
@@ -21,10 +19,10 @@ VulkanDescriptorSet::VulkanDescriptorSet(const std::vector<VkDescriptorSetLayout
   VkDescriptorSetAllocateInfo allocInfo{};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = _vulkanDescriptionPool;
-  allocInfo.descriptorSetCount = VulkanContext::MAX_FRAMES_IN_FLIGHT;
+  allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = _vulkanDescriptorSetLayouts.data();
 
-  m_VkDescriptorSets.resize(VulkanContext::MAX_FRAMES_IN_FLIGHT);
+  m_VkDescriptorSets.resize(1);
 
   VkResult allocateDescriptorSetCreateResult = vkAllocateDescriptorSets(vkDevice, &allocInfo, m_VkDescriptorSets.data());
   if (allocateDescriptorSetCreateResult != VK_SUCCESS) {
@@ -46,11 +44,11 @@ void VulkanDescriptorSet::UpdateUniformDescriptor(const VulkanBuffer& _buffer) {
   descriptorUpdate.m_DescriptorBufferInfo.push_back(bufferInfo);
 }
 
-void VulkanDescriptorSet::UpdateImageSamplers(const std::vector<Ref<Texture>>& _textures) {
+void VulkanDescriptorSet::UpdateImageSamplers(const std::vector<Ref<Texture>> _textures) {
   DODO_TRACE(VulkanDescriptorSet);
 
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
-  constexpr uint32_t maxImageCount = 128;
+  constexpr uint32_t maxImageCount = 16;
   const uint32_t textureSize = _textures.size();
 
   DescriptorUpdate& descriptorUpdate = m_DecriptorUpdates.emplace_back();

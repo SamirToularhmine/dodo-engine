@@ -21,7 +21,7 @@ Ptr<VulkanTextureImage> VulkanTextureImage::CreateEmptyImage(uint32_t _imageWidt
 
 VulkanTextureImage::VulkanTextureImage(const unsigned char* _imageData, uint32_t _imageSize, uint32_t _imageWidth, uint32_t _imageHeight) {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VulkanPhysicalDevice& vulkanPhysicalDevice = *vulkanContext.GetVulkanPhysicalDevice();
   const VmaAllocator& allocator = vulkanContext.GetAllocator();
 
@@ -62,7 +62,7 @@ VulkanTextureImage::~VulkanTextureImage() {
 
 void VulkanTextureImage::Create() {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VulkanPhysicalDevice& vulkanPhysicalDevice = *vulkanContext.GetVulkanPhysicalDevice();
 
   VkImageViewCreateInfo viewInfo{};

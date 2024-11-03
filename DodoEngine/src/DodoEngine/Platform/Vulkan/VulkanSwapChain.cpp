@@ -97,15 +97,14 @@ VulkanSwapChain::VulkanSwapChain(const VulkanSurface& _vulkanSurface, const Vulk
   }
 
   // Filling in the swapchain images
-  uint32_t swapChainImageCount = 0;
-  vkGetSwapchainImagesKHR(vulkanDevice, m_VkSwapChain, &swapChainImageCount, nullptr);
-  m_Images.resize(swapChainImageCount);
-  vkGetSwapchainImagesKHR(vulkanDevice, m_VkSwapChain, &swapChainImageCount, m_Images.data());
+  vkGetSwapchainImagesKHR(vulkanDevice, m_VkSwapChain, &m_ImageCount, nullptr);
+  m_Images.resize(m_ImageCount);
+  vkGetSwapchainImagesKHR(vulkanDevice, m_VkSwapChain, &m_ImageCount, m_Images.data());
 
   m_DepthImage = std::make_unique<VulkanDepthImage>(chosenExtent.width, chosenExtent.height);
   m_ChosenSwapChainDetails = {chosenSurfaceFormat, chosenExtent, chosenPresentMode, m_DepthImage->GetFormat()};
 
-  std::ranges::for_each(std::begin(m_Images), std::end(m_Images), [&](const VkImage& _image) {
+  std::ranges::for_each(std::begin(m_Images), std::end(m_Images), [&](VkImage _image) {
     VkImageViewCreateInfo imageViewCreateInfo{};
     imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     imageViewCreateInfo.image = _image;
@@ -141,7 +140,7 @@ VulkanSwapChain::~VulkanSwapChain() {
 }
 
 void VulkanSwapChain::InitFrameBuffers(const VulkanRenderPass& _renderPass) {
-  std::ranges::for_each(std::cbegin(m_ImageViews), std::cend(m_ImageViews), [&](const VkImageView& _imageView) {
+  std::ranges::for_each(std::begin(m_ImageViews), std::end(m_ImageViews), [&](VkImageView _imageView) {
     const std::vector<VkImageView> attachments = {_imageView, m_DepthImage->GetImageView()};
     const VkExtent2D frameBufferSize = m_ChosenSwapChainDetails.m_VkExtent;
 
@@ -150,14 +149,10 @@ void VulkanSwapChain::InitFrameBuffers(const VulkanRenderPass& _renderPass) {
 }
 
 void VulkanSwapChain::DestroyFrameBuffers() {
-  for (uint32_t i = 0; i < m_FrameBuffers.size(); ++i) {
-    vkDestroyFramebuffer(*m_VulkanDevice, *m_FrameBuffers[i], nullptr);
-  }
-
   m_FrameBuffers.clear();
 }
 
-bool VulkanSwapChain::AcquireNextImage(const VkSemaphore& _semaphore, uint32_t& _imageIndex) const {
+bool VulkanSwapChain::AcquireNextImage(VkSemaphore _semaphore, uint32_t& _imageIndex) {
   return vkAcquireNextImageKHR(*m_VulkanDevice, m_VkSwapChain, UINT64_MAX, _semaphore, VK_NULL_HANDLE, &_imageIndex) == VK_SUCCESS;
 }
 

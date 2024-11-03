@@ -1,6 +1,7 @@
 #pragma once
 
 #include <DodoEngine/Core/InputManager.h>
+#include <DodoEngine/Core/Key.h>
 #include <DodoEngine/Core/Types.h>
 
 #include <GLFW/glfw3.h>

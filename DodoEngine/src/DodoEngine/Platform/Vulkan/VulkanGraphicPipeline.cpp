@@ -17,7 +17,7 @@ DODO_BEGIN_NAMESPACE
 VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecification& _vulkanPipelineSpec, const VulkanSwapChainData& _swapChainData)
     : m_DescriptorSetLayout(std::move(_vulkanPipelineSpec.m_VulkanDescriptorSetLayout)) {
   const VkDevice& vkDevice = *VulkanContext::Get().GetVulkanDevice();
-  const Ref<VulkanRenderPass>& vulkanRenderPass = VulkanContext::Get().GetSceneRenderPass();
+  const Ref<VulkanRenderPass> vulkanRenderPass = VulkanContext::Get().GetSceneRenderPass();
 
   // Loading default shader
   m_VertexShaderModule = _vulkanPipelineSpec.m_VertexShaderModule;
@@ -173,7 +173,7 @@ VulkanGraphicPipeline::VulkanGraphicPipeline(const VulkanGraphicPipelineSpecific
     DODO_CRITICAL("Could not create graphics pipeline");
   }
 
-  m_DescriptorSetLayouts.resize(VulkanContext::MAX_FRAMES_IN_FLIGHT, *m_DescriptorSetLayout);
+  m_DescriptorSetLayouts.resize(1, *m_DescriptorSetLayout);
 }
 
 VulkanGraphicPipeline::~VulkanGraphicPipeline() {

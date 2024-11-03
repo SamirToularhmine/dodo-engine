@@ -9,7 +9,8 @@ public:
 
   void Init() override
   {
-    m_SphereModel = dodo::GltfLoader::LoadFromFile("/sphere/sphere.gltf");
+    const std::string sphereModelPath = "/sphere/sphere.gltf";
+    m_SphereModel = dodo::ModelLoader::LoadModel(sphereModelPath, dodo::SupportedModelFileType::GLTF);
 
     m_Scene = m_Application->GetCurrentScene();
     m_Scene->AddComponentToEntity<dodo::MeshComponent>(m_Scene->AddEntity("My first entity"),
@@ -41,28 +42,28 @@ public:
 
     // float rotateDegree = 1;
     // Ref<Model> hasbullah =
-    // std::make_shared<Model>(FbxLoader::LoadFromFile("resources/models/Hasbullah.fbx"));
+    // std::make_shared<Model>(FbxLoader::LoadFromFile("models/Hasbullah.fbx"));
     // Ref<Mesh> vikingRoom =
-    // ObjLoader::LoadFromFile("resources/models/viking/VikingRoom.obj",
-    // "resources/models/viking/viking_room.png"); Ref<Mesh> chestnut =
-    // ObjLoader::LoadFromFile("resources/models/chestnut/chestnut.obj",
-    // "resources/models/chestnut/model_Fire_emissive_transparent_color.tga.png");
+    // ObjLoader::LoadFromFile("models/viking/VikingRoom.obj",
+    // "models/viking/viking_room.png"); Ref<Mesh> chestnut =
+    // ObjLoader::LoadFromFile("models/chestnut/chestnut.obj",
+    // "models/chestnut/model_Fire_emissive_transparent_color.tga.png");
     // Ref<Mesh> cube =
-    // ObjLoader::LoadFromFile("resources/models/cube/Cube.obj",
-    // "resources/models/cube/Cube.png"); Ref<Model> animatedCube =
+    // ObjLoader::LoadFromFile("models/cube/Cube.obj",
+    // "models/cube/Cube.png"); Ref<Model> animatedCube =
     // std::make_shared<Model>(ModelIdProvider::GetId(),
-    // GltfLoader::LoadFromFile("resources/models/animated-cube/AnimatedCube.gltf"));
+    // GltfLoader::LoadFromFile("models/animated-cube/AnimatedCube.gltf"));
     // Ref<Model> chessGame =
     // std::make_shared<Model>(ModelIdProvider::GetId(),
-    // GltfLoader::LoadFromFile("resources/models/beautiful-game/ABeautifulGame.gltf"));
+    // GltfLoader::LoadFromFile("models/beautiful-game/ABeautifulGame.gltf"));
     // Ref<Model> tree = std::make_shared<Model>(ModelIdProvider::GetId(),
-    // GltfLoader::LoadFromFile("resources/models/tree/tree.gltf"));
+    // GltfLoader::LoadFromFile("models/tree/tree.gltf"));
     // Ref<Model> avocado =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/avocado/Avocado.gltf"));
+    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/avocado/Avocado.gltf"));
     // Ref<Model> sponza =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sponza/Sponza.gltf"));
+    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/sponza/Sponza.gltf"));
     // Ref<Model> sphere =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("resources/models/sphere/sphere.gltf"));
+    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/sphere/sphere.gltf"));
     // const float movingSpeed = 0.1f;
   }
 

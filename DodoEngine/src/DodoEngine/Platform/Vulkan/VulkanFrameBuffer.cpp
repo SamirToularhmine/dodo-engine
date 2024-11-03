@@ -28,7 +28,7 @@ VulkanFrameBuffer::VulkanFrameBuffer(Ref<VulkanDevice> _vulkanDevice, const Vulk
 }
 
 VulkanFrameBuffer::~VulkanFrameBuffer() {
-  //vkDestroyFramebuffer(*m_VulkanDevice, m_FrameBuffer, nullptr);
+  vkDestroyFramebuffer(*m_VulkanDevice, m_FrameBuffer, nullptr);
 }
 
 DODO_END_NAMESPACE

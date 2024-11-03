@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SCENEOBJECTS_CPP
+#define SCENEOBJECTS_CPP
 
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Types.h>
@@ -6,6 +7,7 @@
 #include <DodoEngine/Editor/Editor.h>
 #include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Renderer/Entity.h>
+#include <DodoEngine/Renderer/ModelLoader.h>
 
 #include <ImGuizmo.h>
 #include <imgui.h>
@@ -52,13 +54,13 @@ static void ShowSceneObjects(Scene &_scene)
       {
         _scene.AddComponentToEntity<MeshComponent>(
             _scene.AddEntity("Cube"),
-            {dodo::GltfLoader::LoadFromFile("/animated-cube/AnimatedCube.gltf")});
+            {dodo::ModelLoader::LoadModel("/animated-cube/AnimatedCube.gltf", dodo::SupportedModelFileType::GLTF)});
       }
 
       if (ImGui::MenuItem("Sphere"))
       {
         _scene.AddComponentToEntity<MeshComponent>(
-            _scene.AddEntity("Sphere"), {dodo::GltfLoader::LoadFromFile("/sphere/sphere.gltf")});
+            _scene.AddEntity("Sphere"), {dodo::ModelLoader::LoadModel("/sphere/sphere.gltf", dodo::SupportedModelFileType::GLTF)});
       }
 
       ImGui::EndPopup();
@@ -87,3 +89,5 @@ static void ShowSceneObjects(Scene &_scene)
 } // namespace editor
 
 DODO_END_NAMESPACE
+
+#endif

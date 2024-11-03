@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.30)
 include(FetchContent)
 
 project(
@@ -24,6 +24,8 @@ FetchContent_Declare(
 )
 
 # GLM
+set(GLM_ENABLE_CXX_20 true)
+
 FetchContent_Declare(
     glm
     GIT_REPOSITORY git@github.com:g-truc/glm.git
@@ -121,7 +123,7 @@ set(INCLUDE_LIST "src" "vendor" ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends
 file(GLOB_RECURSE SOURCE_LIST *.cpp *.tpp *.c)
 file(GLOB_RECURSE HEADER_LIST *.h)
 
-add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST}  "src/DodoEngine/Renderer/AssetManager.h" "src/DodoEngine/Renderer/Asset.h")
+add_library(DodoEngine STATIC ${SOURCE_LIST} ${HEADER_LIST} ${IMGUI_SOURCE_LIST})
 target_link_libraries(DodoEngine glfw volk glm GPUOpen::VulkanMemoryAllocator libdeflate::libdeflate_static OpenFBX tinyobjloader tinygltf EnTT::EnTT)
 target_compile_definitions(DodoEngine PUBLIC IMGUI_IMPL_VULKAN_USE_VOLK GLFW_INCLUDE_NONE)
 target_include_directories(DodoEngine PUBLIC ${INCLUDE_LIST})

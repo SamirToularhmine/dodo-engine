@@ -1,12 +1,11 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
+#include <DodoEngine/Core/Key.h>
 
 #include <unordered_map>
 
 DODO_BEGIN_NAMESPACE
-
-enum Key;
 
 class InputManager
 {

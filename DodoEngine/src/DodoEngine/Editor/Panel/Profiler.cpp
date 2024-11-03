@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PROFILE_CPP
+#define PROFILE_CPP
 
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Debug/PerformanceManager.h>
@@ -36,3 +37,5 @@ void ShowProfiler()
 } // namespace editor
 
 DODO_END_NAMESPACE
+
+#endif

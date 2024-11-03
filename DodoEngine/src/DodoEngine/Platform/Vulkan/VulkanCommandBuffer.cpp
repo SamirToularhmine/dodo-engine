@@ -7,7 +7,7 @@ DODO_BEGIN_NAMESPACE
 
 VulkanCommandBuffer::VulkanCommandBuffer() : m_SubmittedQueue(VK_NULL_HANDLE) {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VkCommandPool& commandPool = vulkanContext.GetCommandPool();
 
   VkCommandBufferAllocateInfo allocInfo{};
@@ -21,7 +21,7 @@ VulkanCommandBuffer::VulkanCommandBuffer() : m_SubmittedQueue(VK_NULL_HANDLE) {
 
 VulkanCommandBuffer::~VulkanCommandBuffer() {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VkCommandPool& commandPool = vulkanContext.GetCommandPool();
 
   if (m_SubmittedQueue != VK_NULL_HANDLE)
@@ -53,6 +53,10 @@ void VulkanCommandBuffer::Submit(const VkQueue& _queue) {
   vkQueueSubmit(_queue, 1, &submitInfo, VK_NULL_HANDLE);
 
   m_SubmittedQueue = _queue;
+}
+
+void VulkanCommandBuffer::Reset() {
+  vkResetCommandBuffer(m_VkCommandBuffer, 0);
 }
 
 DODO_END_NAMESPACE

@@ -77,7 +77,7 @@ VulkanImage::~VulkanImage() {
 
 void VulkanImage::TransitionImageLayout(VkImageLayout _newLayout) {
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   VulkanCommandBuffer commandBuffer;
   const VulkanDevice::Queues& queues = vulkanDevice->GetQueues();
 
@@ -126,7 +126,7 @@ void VulkanImage::TransitionImageLayout(VkImageLayout _newLayout) {
 void VulkanImage::CopyFromBuffer(const VulkanBuffer& _imageBuffer) {
 
   const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice>& vulkanDevice = vulkanContext.GetVulkanDevice();
+  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const VkCommandPool& vkCommandPool = vulkanContext.GetCommandPool();
 
   VulkanCommandBuffer commandBuffer;

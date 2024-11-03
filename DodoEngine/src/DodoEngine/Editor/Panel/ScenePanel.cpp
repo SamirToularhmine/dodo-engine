@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SCENEPANEL_CPP
+#define SCENEPANEL_CPP
 
 #include <DodoEngine/Core/Camera.h>
 #include <DodoEngine/Core/Types.h>
@@ -117,3 +118,5 @@ static void ShowScenePanel(Scene &_scene, const Camera &_camera)
 } // namespace editor
 
 DODO_END_NAMESPACE
+
+#endif

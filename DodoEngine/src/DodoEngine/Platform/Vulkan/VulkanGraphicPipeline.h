@@ -13,7 +13,7 @@ struct VulkanSwapChainData;
 class VulkanRenderPass;
 
 struct VulkanGraphicPipelineSpecification {
-  Ref<VulkanDescriptorSetLayout>& m_VulkanDescriptorSetLayout;
+  Ref<VulkanDescriptorSetLayout> m_VulkanDescriptorSetLayout;
   VkShaderModule m_VertexShaderModule;
   VkShaderModule m_FragmentShaderModule;
 };

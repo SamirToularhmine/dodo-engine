@@ -46,15 +46,15 @@ void VulkanRenderer::Init(const Window &_window)
     const std::vector<VulkanDescriptorSetLayoutSpec> defaultPipelineLayoutSpec = {
         VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
                                       VK_SHADER_STAGE_VERTEX_BIT},
-        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 128,
+        VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 16,
                                       VK_SHADER_STAGE_FRAGMENT_BIT}};
     Ref<VulkanDescriptorSetLayout> defaultDescriptorSetLayout =
         std::make_shared<VulkanDescriptorSetLayout>(defaultPipelineLayoutSpec);
 
     const VulkanGraphicPipelineSpecification pipelineSpec{
         .m_VulkanDescriptorSetLayout = defaultDescriptorSetLayout,
-        .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/default.vert.spv"),
-        .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/default.frag.spv")};
+        .m_VertexShaderModule = ShaderManager::LoadShader("shaders/default.vert.spv"),
+        .m_FragmentShaderModule = ShaderManager::LoadShader("shaders/default.frag.spv")};
 
     m_DefaultGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(pipelineSpec, swapChainData);
     m_DefaultDescriptorSet = std::make_shared<VulkanDescriptorSet>(
@@ -70,8 +70,8 @@ void VulkanRenderer::Init(const Window &_window)
         std::make_shared<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
     const VulkanGraphicPipelineSpecification gridPipelineSpec{
         .m_VulkanDescriptorSetLayout = gridDescriptorSetLayout,
-        .m_VertexShaderModule = ShaderManager::LoadShader("resources/shaders/grid.vert.spv"),
-        .m_FragmentShaderModule = ShaderManager::LoadShader("resources/shaders/grid.frag.spv")};
+        .m_VertexShaderModule = ShaderManager::LoadShader("shaders/grid.vert.spv"),
+        .m_FragmentShaderModule = ShaderManager::LoadShader("shaders/grid.frag.spv")};
 
     m_GridGraphicPipeline =
         std::make_shared<VulkanGraphicPipeline>(gridPipelineSpec, swapChainData);
@@ -239,27 +239,25 @@ void VulkanRenderer::EndUIRenderPass(const RenderPass &_renderPass)
 Frame VulkanRenderer::BeginFrame(const uint32_t &_frameNumber)
 {
   DODO_TRACE(VulkanRenderer);
-
   vkDeviceWaitIdle(*m_VulkanContext.GetVulkanDevice());
 
-  const Ref<VulkanCommandBuffer> commandBuffer = m_VulkanContext.GetCommandBuffer(_frameNumber);
-  commandBuffer->BeginRecording();
+  Frame frame{.m_FrameNumber = _frameNumber};
+  m_VulkanContext.BeginFrame(frame);
 
-  return {.m_FrameNumber = _frameNumber, .m_CommandBuffer = commandBuffer};
+  return frame;
 }
 
 void VulkanRenderer::EndFrame(const Frame &_frame)
 {
   DODO_TRACE(VulkanRenderer);
 
-  Ref<VulkanCommandBuffer> commandBuffer = _frame.m_CommandBuffer;
-  commandBuffer->EndRecording();
-
   if (_frame.m_Error)
   {
     return;
   }
 
+  Ref<VulkanCommandBuffer> commandBuffer = _frame.m_CommandBuffer;
+  commandBuffer->EndRecording();
   m_VulkanContext.SubmitQueue(_frame);
   m_VulkanContext.PresentQueue(_frame);
 }

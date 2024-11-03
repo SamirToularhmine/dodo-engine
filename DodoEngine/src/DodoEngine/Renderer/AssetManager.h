@@ -2,6 +2,7 @@
 
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Renderer/Asset.h>
+#include <DodoEngine/Renderer/ModelLoader.h>
 
 #include <string>
 #include <unordered_map>

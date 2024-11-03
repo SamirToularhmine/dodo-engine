@@ -12,7 +12,7 @@ class Texture;
 class TextureManager
 {
  public:
-  static const Ref<Texture>& GetTexture(const char* _filePath);
+  static const Ref<Texture> GetTexture(const char* _filePath);
   static void UnloadTexture(const char* _filePath);
   static void Shutdown();
 

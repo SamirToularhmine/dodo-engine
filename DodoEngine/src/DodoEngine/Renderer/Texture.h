@@ -20,7 +20,7 @@ struct TextureIdProvider
 class Texture
 {
 public:
-  static constexpr const char *DEFAULT_TEXTURE_PATH = "resources/textures/default_texture.png";
+  static constexpr const char *DEFAULT_TEXTURE_PATH = "textures/default_texture.png";
 
   Texture(Ptr<VulkanTextureImage> &_vulkanTextureImage, uint32_t _width, uint32_t _height,
           uint32_t _channels, const std::string &_filePath);

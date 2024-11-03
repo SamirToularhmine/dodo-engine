@@ -17,7 +17,7 @@ struct WindowProps;
 class Application
 {
 public:
-  static Ptr<Application> Create();
+  static Ref<Application> Create();
 
   void Init(const WindowProps &_windowProps);
   void AttachGameLayer(Ref<GameLayer> _gameLayer);

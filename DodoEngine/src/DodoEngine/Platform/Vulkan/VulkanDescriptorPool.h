@@ -13,7 +13,7 @@ class VulkanDevice;
 class VulkanDescriptorPool
 {
 public:
-	VulkanDescriptorPool(uint32_t _descriptorCount, const Ref<VulkanDevice>& _vulkanDevice);
+	VulkanDescriptorPool(uint32_t _descriptorCount, const Ref<VulkanDevice> _vulkanDevice);
 
 	~VulkanDescriptorPool();
 

@@ -65,6 +65,8 @@ struct AttributeSpec
 
     case AttributeType::TEXCOORD_n:
       return "TEXCOORD_0";
+    default:
+      return "UNSUPPORTED_ATTRIBUTE_TYPE";
     };
   }
 
@@ -80,6 +82,8 @@ struct AttributeSpec
 
     case AccessorType::VEC3:
       return 3;
+    default:
+      return -1;
     };
   }
 };
@@ -97,7 +101,7 @@ enum PrimitiveMode
 
 class GltfLoader
 {
-  static inline const std::string RESOURCES_DIRECTORY = "resources/models";
+  static inline const std::string RESOURCES_DIRECTORY = "models";
 
 public:
   static Ref<Model> LoadFromFile(const std::string& _modelFileName);

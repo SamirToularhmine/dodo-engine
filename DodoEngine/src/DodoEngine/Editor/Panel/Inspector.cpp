@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INSPECTOR_CPP
+#define INSPECTOR_CPP
 
 #include <DodoEngine/Core/Types.h>
 #include <DodoEngine/Editor/Component/Component.h>
@@ -72,3 +73,5 @@ static void ShowInspector(Scene &_scene)
 } // namespace editor
 
 DODO_END_NAMESPACE
+
+#endif
