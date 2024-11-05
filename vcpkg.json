@@ -1,0 +1,22 @@
+{
+  "dependencies": [
+    "earcut-hpp",
+    "entt",
+    "glfw3",
+    "glm",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "glfw-binding",
+        "vulkan-binding"
+      ]
+    },
+    "imguizmo",
+    "libdeflate",
+    "tinygltf",
+    "tinyobjloader",
+    "volk",
+    "vulkan-memory-allocator-hpp"
+  ]
+}

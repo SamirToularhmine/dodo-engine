@@ -2,8 +2,6 @@
 
 #include <DodoEngine/Core/Types.h>
 
-#include <memory>
-
 DODO_BEGIN_NAMESPACE
 
 class Camera;

@@ -6,7 +6,6 @@
 #include <DodoEngine/Editor/Scene.h>
 #include <DodoEngine/Platform/Vulkan/VulkanContext.h>
 #include <DodoEngine/Platform/Vulkan/VulkanRenderer.h>
-#include <DodoEngine/Renderer/FbxLoader.h>
 #include <DodoEngine/Renderer/GltfLoader.h>
 #include <DodoEngine/Renderer/Mesh.h>
 #include <DodoEngine/Renderer/MeshTransform.h>
@@ -22,24 +21,24 @@
 
 DODO_BEGIN_NAMESPACE
 
-Ref<Application> Application::Create() { return std::make_shared<Application>(); }
+Ref<Application> Application::Create() { return MakeRef<Application>(); }
 
 void Application::Init(const WindowProps &_windowProps)
 {
   DODO_INFO("Initializing DodoEngine...");
 
-  m_Window = std::make_unique<Window>();
+  m_Window = MakePtr<Window>();
   m_Window->Init(_windowProps);
 
-  m_Renderer = std::make_unique<VulkanRenderer>(VulkanContext::Get());
+  m_Renderer = MakePtr<VulkanRenderer>(VulkanContext::Get());
   m_Renderer->Init(*m_Window);
 
-  m_Camera = std::make_unique<Camera>(glm::vec3{0, -2, -2});
+  m_Camera = MakePtr<Camera>(glm::vec3{0, -2, -2});
 
-  m_EditorLayer = std::make_unique<EditorLayer>();
+  m_EditorLayer = MakePtr<EditorLayer>();
   m_EditorLayer->Init(*m_Window);
 
-  m_Scene = std::make_shared<Scene>();
+  m_Scene = MakeRef<Scene>();
 
   m_EditorLayer->LoadScene(m_Scene);
 }
@@ -65,7 +64,7 @@ void Application::Run()
       const float time = m_Window->GetTime();
       float deltaTime = time - m_LastFrameTime;
       m_LastFrameTime = time;
-      
+
       PerformanceManager::StoreFrameTime(deltaTime);
       m_Camera->Update(deltaTime);
 

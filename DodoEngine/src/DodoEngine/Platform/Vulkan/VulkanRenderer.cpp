@@ -25,7 +25,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <memory>
 
 DODO_BEGIN_NAMESPACE
 
@@ -49,15 +48,15 @@ void VulkanRenderer::Init(const Window &_window)
         VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 16,
                                       VK_SHADER_STAGE_FRAGMENT_BIT}};
     Ref<VulkanDescriptorSetLayout> defaultDescriptorSetLayout =
-        std::make_shared<VulkanDescriptorSetLayout>(defaultPipelineLayoutSpec);
+        MakeRef<VulkanDescriptorSetLayout>(defaultPipelineLayoutSpec);
 
     const VulkanGraphicPipelineSpecification pipelineSpec{
         .m_VulkanDescriptorSetLayout = defaultDescriptorSetLayout,
         .m_VertexShaderModule = ShaderManager::LoadShader("shaders/default.vert.spv"),
         .m_FragmentShaderModule = ShaderManager::LoadShader("shaders/default.frag.spv")};
 
-    m_DefaultGraphicPipeline = std::make_shared<VulkanGraphicPipeline>(pipelineSpec, swapChainData);
-    m_DefaultDescriptorSet = std::make_shared<VulkanDescriptorSet>(
+    m_DefaultGraphicPipeline = MakeRef<VulkanGraphicPipeline>(pipelineSpec, swapChainData);
+    m_DefaultDescriptorSet = MakeRef<VulkanDescriptorSet>(
         m_DefaultGraphicPipeline->GetDescriptorSetLayout(), *m_VulkanContext.GetDescriptorPool());
   }
 
@@ -67,26 +66,25 @@ void VulkanRenderer::Init(const Window &_window)
         VulkanDescriptorSetLayoutSpec{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1,
                                       VK_SHADER_STAGE_VERTEX_BIT}};
     Ref<VulkanDescriptorSetLayout> gridDescriptorSetLayout =
-        std::make_shared<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
+        MakeRef<VulkanDescriptorSetLayout>(gridPipelineLayoutSpec);
     const VulkanGraphicPipelineSpecification gridPipelineSpec{
         .m_VulkanDescriptorSetLayout = gridDescriptorSetLayout,
         .m_VertexShaderModule = ShaderManager::LoadShader("shaders/grid.vert.spv"),
         .m_FragmentShaderModule = ShaderManager::LoadShader("shaders/grid.frag.spv")};
 
-    m_GridGraphicPipeline =
-        std::make_shared<VulkanGraphicPipeline>(gridPipelineSpec, swapChainData);
-    m_GridDescriptorSet = std::make_shared<VulkanDescriptorSet>(
+    m_GridGraphicPipeline = MakeRef<VulkanGraphicPipeline>(gridPipelineSpec, swapChainData);
+    m_GridDescriptorSet = MakeRef<VulkanDescriptorSet>(
         m_GridGraphicPipeline->GetDescriptorSetLayout(), *m_VulkanContext.GetDescriptorPool());
   }
 
   // Uniform buffer
-  m_UniformBuffer = std::make_shared<VulkanBuffer>(
+  m_UniformBuffer = MakeRef<VulkanBuffer>(
       VulkanBufferSpec{sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                        VulkanBuffer::DEFAULT_MEMORY_PROPERTY_FLAGS});
 
   // Adding the quad model as default
   std::vector<Ref<Mesh>> quadMeshes = {Mesh::Create(QUAD_VERTICES, QUAD_INDICES)};
-  Ref<Model> quadModel = std::make_shared<Model>(quadMeshes, "internal");
+  Ref<Model> quadModel = MakeRef<Model>(quadMeshes, "internal");
   m_RendererData.m_ModelsToDraw[quadModel->m_Id] = quadModel;
 }
 
@@ -104,14 +102,15 @@ void VulkanRenderer::Update(Frame &_frame, const Scene &_scene, Camera &_camera,
   // Retrieve all entities with a light component : to do
   m_UniformMvp.m_LightPos = _light.m_Position;
 
-  _scene.ViewAll<MeshComponent>().each([&](const MeshComponent &_meshComponent) {
-    const Ref<Model> &model = _meshComponent.m_Model;
+  _scene.ViewAll<MeshComponent>().each(
+      [&](const MeshComponent &_meshComponent)
+      {
+        const Ref<Model> &model = _meshComponent.m_Model;
 
-    std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes),
-                  [&](const Ref<Mesh> &_mesh) {
-                    m_RendererData.m_ModelsTexture[model->m_Id] = _mesh->m_Texture;
-                  });
-  });
+        std::for_each(std::begin(model->m_Meshes), std::end(model->m_Meshes),
+                      [&](const Ref<Mesh> &_mesh)
+                      { m_RendererData.m_ModelsTexture[model->m_Id] = _mesh->m_Texture; });
+      });
 
   // Grid
   {
@@ -148,11 +147,14 @@ void VulkanRenderer::Update(Frame &_frame, const Scene &_scene, Camera &_camera,
 
     // Retrieve entities with meshes
     _scene.ViewAll<MeshComponent, TransformComponent>().each(
-        [&](const MeshComponent &_meshComponent, const TransformComponent &_transformComponent) {
+        [&](const MeshComponent &_meshComponent, const TransformComponent &_transformComponent)
+        {
           const Ref<Model> model = _meshComponent.m_Model;
 
           std::for_each(
-              std::begin(model->m_Meshes), std::end(model->m_Meshes), [&](const Ref<Mesh> &_mesh) {
+              std::begin(model->m_Meshes), std::end(model->m_Meshes),
+              [&](const Ref<Mesh> &_mesh)
+              {
                 const Ref<Texture> &texture = _mesh->m_Texture;
                 const Ptr<VulkanTextureImage> &textureImage = texture->GetTextureImage();
 
@@ -267,9 +269,9 @@ void VulkanRenderer::UpdateUbo(const Camera &_camera, const Scene &_scene)
   DODO_TRACE(VulkanRenderer);
 
   std::vector<glm::mat4> modelTransforms;
-  _scene.ViewAll<TransformComponent>().each([&](const TransformComponent &_transformComponent) {
-    modelTransforms.push_back(_transformComponent.m_TransformMatrix);
-  });
+  _scene.ViewAll<TransformComponent>().each(
+      [&](const TransformComponent &_transformComponent)
+      { modelTransforms.push_back(_transformComponent.m_TransformMatrix); });
 
   m_UniformMvp = {.m_View = _camera.GetViewMatrix(), .m_Proj = _camera.GetProjectionMatrix()};
   std::copy(std::begin(modelTransforms), std::end(modelTransforms), m_UniformMvp.m_ModelTransform);

@@ -33,6 +33,14 @@ void EditorLayer::Init(const Window &_window)
   const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const Ref<VulkanPhysicalDevice> vulkanPhysicalDevice = vulkanContext.GetVulkanPhysicalDevice();
 
+  ImGui_ImplVulkan_LoadFunctions(
+      [](const char *function_name, void *vulkan_instance)
+      {
+        return vkGetInstanceProcAddr(*(reinterpret_cast<VkInstance *>(vulkan_instance)),
+                                     function_name);
+      },
+      *vulkanContext.GetInstance());
+
   // Setup Platform/Renderer backends
   ImGui_ImplVulkan_InitInfo vulkanInitInfo = {};
   vulkanInitInfo.Instance = *vulkanContext.GetInstance();
@@ -47,6 +55,7 @@ void EditorLayer::Init(const Window &_window)
   vulkanInitInfo.MinImageCount = 2;
   vulkanInitInfo.ImageCount = 2;
   vulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
   ImGui_ImplVulkan_Init(&vulkanInitInfo);
 
   ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;

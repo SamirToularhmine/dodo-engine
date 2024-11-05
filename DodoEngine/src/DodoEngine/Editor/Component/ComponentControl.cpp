@@ -5,7 +5,7 @@
 #include <DodoEngine/Renderer/GltfLoader.h>
 
 #include <imgui.h>
-#include <misc/cpp/imgui_stdlib.h>
+#include <imgui_stdlib.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -58,7 +58,7 @@ void ShowComponentControl<EntityComponent>(EntityComponent &_entityComponent, Sc
 
 template <>
 void ShowComponentControl<TransformComponent>(TransformComponent &_transformComponent,
-                                                     Scene &_scene)
+                                              Scene &_scene)
 {
   ImGui::Text("Transform");
   ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -109,8 +109,7 @@ void ShowComponentControl<TransformComponent>(TransformComponent &_transformComp
   }
 }
 
-template <>
-void ShowComponentControl<MeshComponent>(MeshComponent &_meshComponent, Scene &_scene)
+template <> void ShowComponentControl<MeshComponent>(MeshComponent &_meshComponent, Scene &_scene)
 {
   bool removeComponent = true;
 

@@ -52,10 +52,10 @@ void VulkanContext::Init(const Window &_window)
   applicationInfo.engineVersion = VK_MAKE_API_VERSION(0, 0, 1, 0);
   applicationInfo.apiVersion = VK_API_VERSION_1_3;
 
-  m_Instance = std::make_shared<VulkanInstance>(applicationInfo);
-  m_Surface = std::make_shared<VulkanSurface>(m_Instance, m_NativeWindow);
-  m_PhysicalDevice = std::make_shared<VulkanPhysicalDevice>(*m_Instance, *m_Surface);
-  m_Device = std::make_shared<VulkanDevice>(*m_PhysicalDevice, *m_Instance);
+  m_Instance = MakeRef<VulkanInstance>(applicationInfo);
+  m_Surface = MakeRef<VulkanSurface>(m_Instance, m_NativeWindow);
+  m_PhysicalDevice = MakeRef<VulkanPhysicalDevice>(*m_Instance, *m_Surface);
+  m_Device = MakeRef<VulkanDevice>(*m_PhysicalDevice, *m_Instance);
 
   const VkDevice &device = *m_Device;
 
@@ -127,8 +127,7 @@ void VulkanContext::Init(const Window &_window)
   }
   */
 
-  m_SwapChain =
-      std::make_shared<VulkanSwapChain>(*m_Surface, *m_PhysicalDevice, m_Device, m_NativeWindow);
+  m_SwapChain = MakeRef<VulkanSwapChain>(*m_Surface, *m_PhysicalDevice, m_Device, m_NativeWindow);
   VulkanSwapChainData swapChainData = m_SwapChain->GetSpec();
   VulkanRenderPassAttachments renderPassAttachments{
       {{
@@ -151,10 +150,10 @@ void VulkanContext::Init(const Window &_window)
            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
        }}};
-  m_UiRenderPass = std::make_shared<VulkanRenderPass>(m_Device, renderPassAttachments);
+  m_UiRenderPass = MakeRef<VulkanRenderPass>(m_Device, renderPassAttachments);
   m_SwapChain->InitFrameBuffers(*m_UiRenderPass);
 
-  m_DescriptorPool = std::make_shared<VulkanDescriptorPool>(1, m_Device);
+  m_DescriptorPool = MakeRef<VulkanDescriptorPool>(1, m_Device);
 
   VulkanRenderPassAttachments offScreenRenderPassAttachments{
       {{
@@ -177,15 +176,15 @@ void VulkanContext::Init(const Window &_window)
            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
        }}};
-  m_SceneRenderPass = std::make_shared<VulkanRenderPass>(m_Device, offScreenRenderPassAttachments);
+  m_SceneRenderPass = MakeRef<VulkanRenderPass>(m_Device, offScreenRenderPassAttachments);
 
   const VkExtent2D viewPortSize = swapChainData.m_VkExtent;
   RescaleOffscreenTextureImage(viewPortSize.width, viewPortSize.height);
 
   m_CommandBuffers.resize(m_SwapChain->GetImageCount());
-  m_CommandBuffers[0] = std::make_shared<VulkanCommandBuffer>();
-  m_CommandBuffers[1] = std::make_shared<VulkanCommandBuffer>();
-  m_CommandBuffers[2] = std::make_shared<VulkanCommandBuffer>();
+  m_CommandBuffers[0] = MakeRef<VulkanCommandBuffer>();
+  m_CommandBuffers[1] = MakeRef<VulkanCommandBuffer>();
+  m_CommandBuffers[2] = MakeRef<VulkanCommandBuffer>();
 
   DODO_INFO("Vulkan context initialized successfully");
 }
@@ -233,12 +232,12 @@ void VulkanContext::RescaleOffscreenTextureImage(uint32_t _width, uint32_t _heig
   m_OffScreenFrameBuffer.reset();
 
   m_OffScreenTextureImage = VulkanTextureImage::CreateEmptyImage(_width, _height);
-  m_DepthImage = std::make_unique<VulkanDepthImage>(_width, _height);
+  m_DepthImage = MakePtr<VulkanDepthImage>(_width, _height);
 
   const std::vector<VkImageView> attachments = {m_OffScreenTextureImage->GetImageView(),
                                                 m_DepthImage->GetImageView()};
-  m_OffScreenFrameBuffer = std::make_unique<VulkanFrameBuffer>(m_Device, *m_SceneRenderPass,
-                                                               attachments, _width, _height);
+  m_OffScreenFrameBuffer =
+      MakePtr<VulkanFrameBuffer>(m_Device, *m_SceneRenderPass, attachments, _width, _height);
 }
 
 void VulkanContext::RecreateSwapChain()
@@ -254,8 +253,7 @@ void VulkanContext::RecreateSwapChain()
   vkCreateSemaphore(*m_Device, &semaphoreCreateInfo, nullptr, &m_ImagesAvailableSemaphore);
 
   m_SwapChain.reset();
-  m_SwapChain =
-      std::make_shared<VulkanSwapChain>(*m_Surface, *m_PhysicalDevice, m_Device, m_NativeWindow);
+  m_SwapChain = MakeRef<VulkanSwapChain>(*m_Surface, *m_PhysicalDevice, m_Device, m_NativeWindow);
   m_SwapChain->InitFrameBuffers(*m_UiRenderPass);
 }
 

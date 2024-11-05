@@ -7,11 +7,9 @@
 #define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #include <tiny_obj_loader.h>
 
-#include <memory>
-
 DODO_BEGIN_NAMESPACE
 
-Ref<Model> ObjLoader::LoadFromFile(const std::string& _filePath, const char *_textureFileName)
+Ref<Model> ObjLoader::LoadFromFile(const std::string &_filePath, const char *_textureFileName)
 {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;

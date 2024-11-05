@@ -23,14 +23,14 @@ struct Model
   std::string m_ModelPath;
   std::vector<Ref<Mesh>> m_Meshes;
 
-  Model(const std::vector<Ref<Mesh>> &_meshes, const std::string& _modelPath)
+  Model(const std::vector<Ref<Mesh>> &_meshes, const std::string &_modelPath)
       : m_Id(ModelIdProvider::GetId()), m_Meshes(_meshes), m_ModelPath(_modelPath)
   {
   }
 
-  static Ref<Model> Create(const std::vector<Ref<Mesh>> &_meshes, const std::string& _modelPath)
+  static Ref<Model> Create(const std::vector<Ref<Mesh>> &_meshes, const std::string &_modelPath)
   {
-    return std::make_shared<Model>(_meshes, _modelPath);
+    return MakeRef<Model>(_meshes, _modelPath);
   }
 };
 

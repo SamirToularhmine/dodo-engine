@@ -1,7 +1,5 @@
 #include <DodoEngine/DodoEngine.h>
 
-#include <memory>
-
 class DodoGameLayer : public dodo::GameLayer
 {
 public:
@@ -10,7 +8,8 @@ public:
   void Init() override
   {
     const std::string sphereModelPath = "/sphere/sphere.gltf";
-    m_SphereModel = dodo::ModelLoader::LoadModel(sphereModelPath, dodo::SupportedModelFileType::GLTF);
+    m_SphereModel =
+        dodo::ModelLoader::LoadModel(sphereModelPath, dodo::SupportedModelFileType::GLTF);
 
     m_Scene = m_Application->GetCurrentScene();
     m_Scene->AddComponentToEntity<dodo::MeshComponent>(m_Scene->AddEntity("My first entity"),
@@ -42,7 +41,7 @@ public:
 
     // float rotateDegree = 1;
     // Ref<Model> hasbullah =
-    // std::make_shared<Model>(FbxLoader::LoadFromFile("models/Hasbullah.fbx"));
+    // MakeRef<Model>(FbxLoader::LoadFromFile("models/Hasbullah.fbx"));
     // Ref<Mesh> vikingRoom =
     // ObjLoader::LoadFromFile("models/viking/VikingRoom.obj",
     // "models/viking/viking_room.png"); Ref<Mesh> chestnut =
@@ -51,19 +50,19 @@ public:
     // Ref<Mesh> cube =
     // ObjLoader::LoadFromFile("models/cube/Cube.obj",
     // "models/cube/Cube.png"); Ref<Model> animatedCube =
-    // std::make_shared<Model>(ModelIdProvider::GetId(),
+    // MakeRef<Model>(ModelIdProvider::GetId(),
     // GltfLoader::LoadFromFile("models/animated-cube/AnimatedCube.gltf"));
     // Ref<Model> chessGame =
-    // std::make_shared<Model>(ModelIdProvider::GetId(),
+    // MakeRef<Model>(ModelIdProvider::GetId(),
     // GltfLoader::LoadFromFile("models/beautiful-game/ABeautifulGame.gltf"));
-    // Ref<Model> tree = std::make_shared<Model>(ModelIdProvider::GetId(),
+    // Ref<Model> tree = MakeRef<Model>(ModelIdProvider::GetId(),
     // GltfLoader::LoadFromFile("models/tree/tree.gltf"));
     // Ref<Model> avocado =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/avocado/Avocado.gltf"));
+    // MakeRef<Model>(GltfLoader::LoadFromFile("models/avocado/Avocado.gltf"));
     // Ref<Model> sponza =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/sponza/Sponza.gltf"));
+    // MakeRef<Model>(GltfLoader::LoadFromFile("models/sponza/Sponza.gltf"));
     // Ref<Model> sphere =
-    // std::make_shared<Model>(GltfLoader::LoadFromFile("models/sphere/sphere.gltf"));
+    // MakeRef<Model>(GltfLoader::LoadFromFile("models/sphere/sphere.gltf"));
     // const float movingSpeed = 0.1f;
   }
 
@@ -82,7 +81,7 @@ int main(int argc, char const *argv[])
 
   auto application = dodo::Application::Create();
 
-  dodo::Ref<DodoGameLayer> dodoGameLayer = std::make_shared<DodoGameLayer>(application);
+  dodo::Ref<DodoGameLayer> dodoGameLayer = MakeRef<DodoGameLayer>(application);
   application->Init(dodo::WindowProps{1920, 1080, "Dodo Engine", true, false});
   application->AttachGameLayer(dodoGameLayer);
 

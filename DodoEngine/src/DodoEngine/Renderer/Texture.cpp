@@ -9,7 +9,6 @@
 
 #include <stb_image/stb_image.h>
 
-#include <memory>
 #include <string>
 #define VK_NO_PROTOTYPES
 #include <vk_mem_alloc.h>
@@ -42,7 +41,7 @@ Ref<Texture> Texture::LoadFromFile(const std::string &_fileName)
 
   stbi_image_free(pixels);
 
-  return std::make_shared<Texture>(vulkanTextureImage, texWidth, texHeight, texChannels, _fileName);
+  return MakeRef<Texture>(vulkanTextureImage, texWidth, texHeight, texChannels, _fileName);
 }
 
 DODO_END_NAMESPACE
