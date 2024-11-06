@@ -19,9 +19,9 @@ void Window::Init(const WindowProps &_windowProps)
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-  m_NativeWindow = glfwCreateWindow(
-      _windowProps.m_Width, _windowProps.m_Height, _windowProps.m_Name.c_str(),
-      _windowProps.m_FullScreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+  m_NativeWindow =
+      glfwCreateWindow(_windowProps.m_Width, _windowProps.m_Height, _windowProps.m_Name.c_str(),
+                       _windowProps.m_FullScreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 
   glfwMakeContextCurrent(m_NativeWindow);
   glfwSwapInterval(_windowProps.m_VSync);
@@ -38,7 +38,7 @@ void Window::PollEvents() const { glfwPollEvents(); }
 
 void Window::Update() const
 {
-  DODO_TRACE(Window);
+  // DODO_TRACE(Window);
 
   PollEvents();
 
@@ -53,14 +53,11 @@ void Window::Shutdown() const { glfwTerminate(); }
 
 float Window::GetTime() const { return glfwGetTime(); }
 
-bool Window::ShouldClose() const
-{
-  return glfwWindowShouldClose(m_NativeWindow);
-}
+bool Window::ShouldClose() const { return glfwWindowShouldClose(m_NativeWindow); }
 
 void Window::SwapBuffers() const
 {
-  DODO_TRACE(GameLoop);
+  // DODO_TRACE(GameLoop);
 
   glfwSwapBuffers(m_NativeWindow);
 }

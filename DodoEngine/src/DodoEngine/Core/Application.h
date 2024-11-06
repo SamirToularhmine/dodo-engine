@@ -22,6 +22,8 @@ public:
 
   void Run();
 
+  void Shutdown();
+
   Ref<Scene> GetCurrentScene() { return m_Scene; }
 
 private:

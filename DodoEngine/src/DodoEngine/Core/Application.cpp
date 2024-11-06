@@ -15,10 +15,6 @@
 #include <DodoEngine/Utils/Log.h>
 #include <DodoEngine/Utils/Utils.h>
 
-#include <functional>
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 DODO_BEGIN_NAMESPACE
 
 Ref<Application> Application::Create() { return MakeRef<Application>(); }
@@ -86,11 +82,17 @@ void Application::Run()
       m_Window->SwapBuffers();
     }
   }
-  m_Window->Shutdown();
+
+  Shutdown();
+}
+
+void Application::Shutdown()
+{
   m_EditorLayer->Shutdown();
   m_Scene->Shutdown();
   m_GameLayer->Shutdown();
   m_Renderer->Shutdown();
+  m_Window->Shutdown();
 }
 
 DODO_END_NAMESPACE

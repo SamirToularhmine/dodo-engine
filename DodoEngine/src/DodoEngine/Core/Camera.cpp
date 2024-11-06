@@ -20,7 +20,7 @@ Camera::Camera(glm::vec3 _position)
 
 void Camera::Update(float _deltaTime)
 {
-  DODO_TRACE(Camera);
+  // DODO_TRACE(Camera);
 
   InputManager &inputManager = InputManager::Get();
   constexpr float radius = 1.0f;
@@ -52,12 +52,9 @@ void Camera::Update(float _deltaTime)
   }
 
   m_ViewMatrix = glm::translate(glm::mat4(1.0f), m_Position);
-  m_ViewMatrix =
-      glm::rotate(m_ViewMatrix, glm::radians(m_Pitch), glm::vec3(1, 0, 0));
-  m_ViewMatrix =
-      glm::rotate(m_ViewMatrix, glm::radians(m_Yaw), glm::vec3(0, 1, 0));
-  m_ViewMatrix =
-      glm::rotate(m_ViewMatrix, glm::radians(m_Roll), glm::vec3(0, 0, 1));
+  m_ViewMatrix = glm::rotate(m_ViewMatrix, glm::radians(m_Pitch), glm::vec3(1, 0, 0));
+  m_ViewMatrix = glm::rotate(m_ViewMatrix, glm::radians(m_Yaw), glm::vec3(0, 1, 0));
+  m_ViewMatrix = glm::rotate(m_ViewMatrix, glm::radians(m_Roll), glm::vec3(0, 0, 1));
 }
 
 void Camera::Reset()
@@ -68,9 +65,8 @@ void Camera::Reset()
 
 void Camera::UpdateProjectionMatrix(const glm::vec2 &extent)
 {
-  m_ProjectionMatrix = glm::perspective(glm::radians(90.0f),
-                                        extent.x / static_cast<float>(extent.y),
-                                        NEAR_PLANE, FAR_PLANE);
+  m_ProjectionMatrix = glm::perspective(
+      glm::radians(90.0f), extent.x / static_cast<float>(extent.y), NEAR_PLANE, FAR_PLANE);
   m_ProjectionMatrix[1][1] *= -1;
 }
 

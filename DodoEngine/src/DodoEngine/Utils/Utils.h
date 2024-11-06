@@ -1,11 +1,10 @@
 #pragma once
 
 #include <DodoEngine/Core/Types.h>
-#include <DodoEngine/Utils/ProfileTimer.h>
 #include <DodoEngine/Utils/Log.h>
+#include <DodoEngine/Utils/ProfileTimer.h>
 
 #include <filesystem>
-#include <format>
 #include <format>
 #include <fstream>
 #include <iostream>
@@ -14,11 +13,13 @@
 
 DODO_BEGIN_NAMESPACE
 
-static std::vector<char> readFile(const char* filePath) {
+static std::vector<char> readFile(const char *filePath)
+{
   std::cout << std::filesystem::current_path().string() << std::endl;
   std::ifstream fileStream(filePath, std::ios::ate | std::ios::binary);
 
-  if (!fileStream.is_open()) {
+  if (!fileStream.is_open())
+  {
     DODO_CRITICAL("Could not open file at path {}", filePath);
   }
 
@@ -32,6 +33,6 @@ static std::vector<char> readFile(const char* filePath) {
   return fileContent;
 }
 
- #define DODO_TRACE(...) ProfileTimer _timer{std::format("{}::{}", #__VA_ARGS__, __func__).c_str()};
+#define DODO_TRACE(...) ProfileTimer _timer{std::format("{}::{}", #__VA_ARGS__, __func__).c_str()};
 
 DODO_END_NAMESPACE

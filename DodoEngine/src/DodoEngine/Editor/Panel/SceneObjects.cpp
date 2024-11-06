@@ -54,13 +54,16 @@ static void ShowSceneObjects(Scene &_scene)
       {
         _scene.AddComponentToEntity<MeshComponent>(
             _scene.AddEntity("Cube"),
-            {dodo::ModelLoader::LoadModel("/animated-cube/AnimatedCube.gltf", dodo::SupportedModelFileType::GLTF)});
+            {dodo::ModelLoader::LoadModel("/animated-cube/AnimatedCube.gltf",
+                                          dodo::SupportedModelFileType::GLTF)});
       }
 
       if (ImGui::MenuItem("Sphere"))
       {
         _scene.AddComponentToEntity<MeshComponent>(
-            _scene.AddEntity("Sphere"), {dodo::ModelLoader::LoadModel("/sphere/sphere.gltf", dodo::SupportedModelFileType::GLTF)});
+            _scene.AddEntity("Sphere"),
+            {dodo::ModelLoader::LoadModel("/sphere/sphere.gltf",
+                                          dodo::SupportedModelFileType::GLTF)});
       }
 
       ImGui::EndPopup();
@@ -68,7 +71,8 @@ static void ShowSceneObjects(Scene &_scene)
 
     _scene.GetAll<EntityComponent, TransformComponent, MeshComponent>().each(
         [&](EntityComponent &_entityComponent, TransformComponent &_transformComponent,
-            MeshComponent &_meshComponent) {
+            MeshComponent &_meshComponent)
+        {
           const EditorEntity &editorEntity = _entityComponent.m_EditorEntity;
           Entity &entity = *_entityComponent.m_Entity;
 

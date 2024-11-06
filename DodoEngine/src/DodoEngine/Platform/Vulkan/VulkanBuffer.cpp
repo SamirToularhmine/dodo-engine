@@ -1,5 +1,4 @@
 #include <DodoEngine/Platform/Vulkan/VulkanBuffer.h>
-
 #include <DodoEngine/Platform/Vulkan/VulkanCommandBuffer.h>
 #include <DodoEngine/Platform/Vulkan/VulkanDevice.h>
 #include <DodoEngine/Platform/Vulkan/VulkanPhysicalDevice.h>
@@ -7,13 +6,14 @@
 
 DODO_BEGIN_NAMESPACE
 
-VulkanBuffer::VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec) : m_ElementCount(0) {
+VulkanBuffer::VulkanBuffer(const VulkanBufferSpec &_vulkanBufferSpec) : m_ElementCount(0)
+{
 
-  const VulkanContext& vulkanContext = VulkanContext::Get();
+  const VulkanContext &vulkanContext = VulkanContext::Get();
   const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
   const Ref<VulkanPhysicalDevice> vulkanPhysicalDevice = vulkanContext.GetVulkanPhysicalDevice();
-  const VmaAllocator& allocator = vulkanContext.GetAllocator();
-  const VkDeviceSize& allocationSize = _vulkanBufferSpec.m_AllocationSize;
+  const VmaAllocator &allocator = vulkanContext.GetAllocator();
+  const VkDeviceSize &allocationSize = _vulkanBufferSpec.m_AllocationSize;
 
   VmaAllocationCreateInfo vmaAllocInfo = {};
   vmaAllocInfo.usage = VMA_MEMORY_USAGE_AUTO;
@@ -25,27 +25,29 @@ VulkanBuffer::VulkanBuffer(const VulkanBufferSpec& _vulkanBufferSpec) : m_Elemen
   bufferCreateInfo.usage = _vulkanBufferSpec.m_Usage;
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  const VkResult bufferCreateResult = vmaCreateBuffer(allocator, &bufferCreateInfo, &vmaAllocInfo, &m_Buffer, &m_Allocation, nullptr);
-  vmaSetAllocationName(allocator, m_Allocation, std::format("Vertex Buffer", _vulkanBufferSpec.m_AllocationSize).c_str());
-  if (bufferCreateResult != VK_SUCCESS) {
+  const VkResult bufferCreateResult = vmaCreateBuffer(allocator, &bufferCreateInfo, &vmaAllocInfo,
+                                                      &m_Buffer, &m_Allocation, nullptr);
+  vmaSetAllocationName(allocator, m_Allocation,
+                       std::format("Vertex Buffer", _vulkanBufferSpec.m_AllocationSize).c_str());
+  if (bufferCreateResult != VK_SUCCESS)
+  {
     DODO_CRITICAL("Could not create the vertex buffer");
   }
 
   m_Size = allocationSize;
 }
 
-VulkanBuffer::~VulkanBuffer() {
-  const VulkanContext& vulkanContext = VulkanContext::Get();
-  const Ref<VulkanDevice> vulkanDevice = vulkanContext.GetVulkanDevice();
-  const VmaAllocator& allocator = vulkanContext.GetAllocator();
-
-  vkDeviceWaitIdle(*vulkanDevice);
+VulkanBuffer::~VulkanBuffer()
+{
+  const VulkanContext &vulkanContext = VulkanContext::Get();
+  const VmaAllocator &allocator = vulkanContext.GetAllocator();
 
   vmaDestroyBuffer(allocator, m_Buffer, m_Allocation);
 }
 
-void VulkanBuffer::CopyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size) {
-  VulkanContext& vulkanContext = VulkanContext::Get();
+void VulkanBuffer::CopyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size)
+{
+  VulkanContext &vulkanContext = VulkanContext::Get();
   VulkanCommandBuffer commandBuffer;
   commandBuffer.BeginRecording();
 

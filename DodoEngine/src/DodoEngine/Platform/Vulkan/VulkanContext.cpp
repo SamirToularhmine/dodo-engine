@@ -207,7 +207,7 @@ void VulkanContext::BeginSceneRenderPass(RenderPass &_renderPass) const
 
 void VulkanContext::EndSceneRenderPass(const RenderPass &_renderPass) const
 {
-  DODO_TRACE(GameLoop);
+  // DODO_TRACE(GameLoop);
 
   m_SceneRenderPass->End(_renderPass);
 }
@@ -242,7 +242,7 @@ void VulkanContext::RescaleOffscreenTextureImage(uint32_t _width, uint32_t _heig
 
 void VulkanContext::RecreateSwapChain()
 {
-  DODO_ERROR("Could not retrieve an image from the swapchain, recreating it...");
+  DODO_ERROR("Could not retrieve an image from the swapchain, recreating it");
   vkDeviceWaitIdle(*m_Device);
 
   vkDestroySemaphore(*m_Device, m_ImagesAvailableSemaphore, nullptr);
@@ -316,21 +316,28 @@ void VulkanContext::RetrieveSwapChainImage(uint32_t &_imageIndex)
 void VulkanContext::Shutdown()
 {
   const VkDevice &device = *m_Device;
-  vkDeviceWaitIdle(*m_Device);
+  vkDeviceWaitIdle(device);
 
   m_CommandBuffers.clear();
+  m_OffScreenFrameBuffer.reset();
+  m_DepthImage.reset();
+  m_OffScreenTextureImage.reset();
+  m_SceneRenderPass.reset();
+  m_DescriptorPool.reset();
+  m_UiRenderPass.reset();
+  m_SwapChain.reset();
 
   vkDestroySemaphore(device, m_ImagesAvailableSemaphore, nullptr);
   vkDestroySemaphore(device, m_RenderFinishedSemaphore, nullptr);
 
   vkDestroyCommandPool(device, m_CommandPool, nullptr);
 
-  m_OffScreenFrameBuffer.reset();
-  m_SwapChain.reset();
-  m_DepthImage.reset();
-  m_OffScreenTextureImage.reset();
-
   vmaDestroyAllocator(m_VmaAllocator);
+
+  m_Device.reset();
+  m_PhysicalDevice.reset();
+  m_Surface.reset();
+  m_Instance.reset();
 }
 
 DODO_END_NAMESPACE

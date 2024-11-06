@@ -91,7 +91,7 @@ void VulkanRenderer::Init(const Window &_window)
 void VulkanRenderer::Update(Frame &_frame, const Scene &_scene, Camera &_camera,
                             const Light &_light, float _deltaTime)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   const RenderPass renderPass = BeginSceneRenderPass(_frame);
   const VkCommandBuffer &commandBuffer = *_frame.m_CommandBuffer;
@@ -189,12 +189,13 @@ void VulkanRenderer::Update(Frame &_frame, const Scene &_scene, Camera &_camera,
 
 void VulkanRenderer::Shutdown()
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
+
+  ShaderManager::Shutdown();
+  TextureManager::Shutdown();
 
   m_RendererData.Clear();
   m_UniformBuffer.reset();
-  ShaderManager::Shutdown();
-  TextureManager::Shutdown();
   m_GridGraphicPipeline.reset();
   m_DefaultGraphicPipeline.reset();
   m_VulkanContext.Shutdown();
@@ -202,7 +203,7 @@ void VulkanRenderer::Shutdown()
 
 RenderPass VulkanRenderer::BeginSceneRenderPass(Frame &_frame)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   RenderPass renderPass{_frame};
   m_VulkanContext.BeginSceneRenderPass(renderPass);
@@ -212,7 +213,7 @@ RenderPass VulkanRenderer::BeginSceneRenderPass(Frame &_frame)
 
 void VulkanRenderer::EndSceneRenderPass(const RenderPass &_renderPass)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   m_VulkanContext.EndSceneRenderPass(_renderPass);
 
@@ -223,7 +224,7 @@ void VulkanRenderer::EndSceneRenderPass(const RenderPass &_renderPass)
 
 RenderPass VulkanRenderer::BeginUIRenderPass(Frame &_frame)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   RenderPass renderPass{_frame};
   m_VulkanContext.BeginUIRenderPass(renderPass);
@@ -233,15 +234,14 @@ RenderPass VulkanRenderer::BeginUIRenderPass(Frame &_frame)
 
 void VulkanRenderer::EndUIRenderPass(const RenderPass &_renderPass)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   m_VulkanContext.EndUIRenderPass(_renderPass);
 }
 
 Frame VulkanRenderer::BeginFrame(const uint32_t &_frameNumber)
 {
-  DODO_TRACE(VulkanRenderer);
-  vkDeviceWaitIdle(*m_VulkanContext.GetVulkanDevice());
+  // DODO_TRACE(VulkanRenderer);
 
   Frame frame{.m_FrameNumber = _frameNumber};
   m_VulkanContext.BeginFrame(frame);
@@ -251,7 +251,7 @@ Frame VulkanRenderer::BeginFrame(const uint32_t &_frameNumber)
 
 void VulkanRenderer::EndFrame(const Frame &_frame)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   if (_frame.m_Error)
   {
@@ -266,7 +266,7 @@ void VulkanRenderer::EndFrame(const Frame &_frame)
 
 void VulkanRenderer::UpdateUbo(const Camera &_camera, const Scene &_scene)
 {
-  DODO_TRACE(VulkanRenderer);
+  // DODO_TRACE(VulkanRenderer);
 
   std::vector<glm::mat4> modelTransforms;
   _scene.ViewAll<TransformComponent>().each(

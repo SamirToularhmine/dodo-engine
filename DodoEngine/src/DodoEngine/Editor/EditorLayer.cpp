@@ -72,15 +72,6 @@ void EditorLayer::Init(const Window &_window)
 void EditorLayer::Update(Frame &_frame, const Camera &_camera, Renderer &_renderer) const
 {
   Scene &scene = *m_Scene;
-
-  if (editor::s_WindowResized)
-  {
-    VulkanContext &vulkanContext = VulkanContext::Get();
-    vulkanContext.RescaleOffscreenTextureImage(editor::s_ScenePanelWidth,
-                                               editor::s_ScenePanelHeight);
-    editor::s_WindowResized = false;
-  }
-
   const RenderPass renderPass = _renderer.BeginUIRenderPass(_frame);
 
   if (renderPass.m_Frame.m_Error)
@@ -118,9 +109,6 @@ void EditorLayer::Update(Frame &_frame, const Camera &_camera, Renderer &_render
 
 void EditorLayer::Shutdown() const
 {
-  const VulkanContext &vulkanContext = VulkanContext::Get();
-  vkDeviceWaitIdle(*vulkanContext.GetVulkanDevice());
-
   ImGui_ImplVulkan_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();

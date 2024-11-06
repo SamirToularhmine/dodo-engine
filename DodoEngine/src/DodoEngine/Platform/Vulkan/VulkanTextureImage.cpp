@@ -67,8 +67,6 @@ VulkanTextureImage::~VulkanTextureImage()
   const VulkanContext &vulkanContext = VulkanContext::Get();
   const VulkanDevice &vulkanDevice = *vulkanContext.GetVulkanDevice();
 
-  vkDeviceWaitIdle(vulkanDevice);
-
   vkDestroySampler(vulkanDevice, m_Sampler, nullptr);
   vkDestroyImageView(vulkanDevice, m_ImageView, nullptr);
 }
